@@ -1,0 +1,1 @@
+h7_board\segger_hardfaulthandler.o: ..\Development_Layer\User_Debug\SEGGER_Hardfault_Handler\segger_hardfaulthandler.c

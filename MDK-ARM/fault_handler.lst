@@ -1,0 +1,55 @@
+
+
+
+ARM Macro Assembler    Page 1 
+
+
+    1 00000000         
+    2 00000000         ;    PRESERVE8
+    3 00000000         ;    THUMB
+    4 00000000         
+    5 00000000         ;    AREA    |.text|, CODE, READONLY
+    6 00000000         ;    EXPORT  HardFault_Handler
+    7 00000000         ;    IMPORT  HardFault_Handler_C
+    8 00000000         
+    9 00000000         ;HardFault_Handler PROC
+   10 00000000         ;    ; -------------------------------------------------
+                       --------
+   11 00000000         ;    ; 关键逻辑：查看 LR (EXC_RETURN) 确定死机时用的哪个
+                       栈
+   12 00000000         ;    ; -------------------------------------------------
+                       --------
+   13 00000000         ;    TST     LR, #4          ; 测试 LR 的 Bit 2
+   14 00000000         ;    ITE     EQ              ; 判断
+   15 00000000         ;    MRSEQ   R0, MSP         ; 如果 Bit 2 == 0，说明死机
+                       时在用 MSP
+   16 00000000         ;    MRSNE   R0, PSP         ; 如果 Bit 2 == 1，说明死机
+                       时在用 PSP
+   17 00000000         
+   18 00000000         ;    ; -------------------------------------------------
+                       --------
+   19 00000000         ;    ; 此时 R0 保存了正确的栈顶指针
+   20 00000000         ;    ; 将 R0 作为参数传递给 C 函数 HardFault_Handler_C(u
+                       int32_t *stack)
+   21 00000000         ;    ; -------------------------------------------------
+                       --------
+   22 00000000         ;    B       HardFault_Handler_C
+   23 00000000         ;    
+   24 00000000         ;    ALIGN
+   25 00000000         ;    ENDP
+   26 00000000         
+   27 00000000         ;    END
+                       
+Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M7.fp.dp --apcs=
+interwork --depend=h7_board\fault_handler.d -oh7_board\fault_handler.o -I../Cor
+e/Inc -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Drivers/STM32H7xx_HAL_Dri
+ver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../Middlewares/Third_Par
+ty/FreeRTOS/Source/include -I../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_R
+TOS_V2 -I../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I..
+/Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB
+_Device_Library/Class/CDC/Inc -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I
+../Drivers/CMSIS/Include -I../Middlewares/ST/ARM/DSP/Inc -I.\RTE\_H7_Board -IE:
+\keil5.5.43\MDK\Packs\ARM\CMSIS\6.2.0\CMSIS\Core\Include --predefine="__UVISION
+_VERSION SETA 543" --predefine="STM32H723xx SETA 1" --predefine="_RTE_ SETA 1" 
+--list=fault_handler.lst fault_handler.s
+333 symbols in table
