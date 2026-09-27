@@ -218,7 +218,7 @@ void TIM6_Robot_1ms_Callback() {
 }
 
 
-void FSIA6B_RX_Callback(uint8_t *Buffer, uint16_t Length) {
+void FSIA6B_RX_Callback(uint8_t *Rx_Data, uint16_t Length) {
 
-	robot.Handle_RC_Data(Buffer);
+	robot.FS_I6X.UART_RxCpltCallback(Rx_Data, Length);
 }

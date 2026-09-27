@@ -10,7 +10,7 @@
 static Class_DR16* Global_DR16_Instance = nullptr;
 
 // [CN] 驱动层所需的回调函数桥接
-static void DR16_Bridge_Callback(uint8_t* buf, uint16_t len) {
+static void FS_IA6B_Bridge_Callback(uint8_t* buf, uint16_t len) {
     if (Global_DR16_Instance) Global_DR16_Instance->UART_RxCpltCallback(buf, len);
 }
 
@@ -22,7 +22,7 @@ static void DR16_Bridge_Callback(uint8_t* buf, uint16_t len) {
 void Class_DR16::Init(UART_HandleTypeDef *huart)
 {
    Global_DR16_Instance = this;
-   UART_Manage_Object = UART_Init(huart, DR16_Bridge_Callback, 18);
+   UART_Manage_Object = UART_Init(huart, FS_IA6B_Bridge_Callback, 18);
 
 }
 

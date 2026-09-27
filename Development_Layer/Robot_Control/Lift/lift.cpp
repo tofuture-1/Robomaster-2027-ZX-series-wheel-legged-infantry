@@ -138,7 +138,7 @@ void Class_Lift::Control()
     return;
   }
 
-  if (Robot->VT03.Get_Status() == VTM_RX_Status_ENABLE) {
+  if (Robot->VT03.Get_Status() == FS_IA6B_Status_ENABLE) {
     if (Robot->current_control_mode == CONTROL_MODE_REMOTE) {
       float wheel = Robot->VT03.Get_Wheel();
 

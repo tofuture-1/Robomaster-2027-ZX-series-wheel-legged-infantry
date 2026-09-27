@@ -190,7 +190,7 @@ public:
     Class_SingleDogFoot_DM Foot2_Right;
 
     void FSi6x_control_polar();
-    void Handle_RC_Data(uint8_t *data);
+
 
     Class_Chassis Chassis;
 
@@ -262,6 +262,8 @@ public:
     //底盘通讯
     G_C_Communicate The_Chassis;
 
+    Class_FS_IA6B FS_I6X;
+
     void Init();
 
     void RTOS_1000ms_Alive_PeriodElapsedCallback();
@@ -279,7 +281,7 @@ protected:
 
     //腿部运动学解析测试
     /** @brief FS-IA6B遥控器IBUS解析后的通道数据 */
-    ibus_msg fsia6b_msg;
+    //Ibus_msg fsia6b_msg;
 
     /**
      * @brief 跳跃触发标志
