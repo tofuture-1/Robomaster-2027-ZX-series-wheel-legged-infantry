@@ -83,10 +83,11 @@ void Class_Chassis::Init()
 
 
 
+
     // 滤波器初始化
     Motor_Chassis_Left.Filter_Kalman_Omega.Init(0.01f, 2.0f, 0.1f, 0.0f);
     // PID初始化
-    Motor_Chassis_Left.PID_Omega.Init(0.2f, 0.25f, 0.0f, 0.0f, 0.0f , 15.0f, 20.0f);
+    Motor_Chassis_Left.PID_Omega.Init(0.2f, 0.25f, 0.0f, 0.0f, 0.0f , 15.0f, 19.0f);//原booster处的Output_Max是20.0f
     // 电机初始化
 
     Motor_Chassis_Left.Init(&hfdcan2,Motor_DJI_ID_0x202, Motor_DJI_Control_Method_OMEGA);
@@ -94,9 +95,10 @@ void Class_Chassis::Init()
     // 滤波器初始化
     Motor_Chassis_Right.Filter_Kalman_Omega.Init(0.01f, 2.0f, 0.1f, 0.0f);
     // PID初始化
-    Motor_Chassis_Right.PID_Omega.Init(0.2f, 0.25f, 0.0f, 0.0f, 0.0f , 15.0f, 20.0f);
+    Motor_Chassis_Right.PID_Omega.Init(0.2f, 0.25f, 0.0f, 0.0f, 0.0f , 15.0f, 19.0f);
 
     Motor_Chassis_Right.Init(&hfdcan2,Motor_DJI_ID_0x201, Motor_DJI_Control_Method_OMEGA);
+
 
 
 }
@@ -118,7 +120,10 @@ void Class_Chassis::RTOS_100ms_Alive_Callback()
 void Class_Chassis::RTOS_1ms_Calculate_Callback()
 {
 
+
+
     Output();
+
 
 
 
@@ -127,6 +132,8 @@ void Class_Chassis::RTOS_1ms_Calculate_Callback()
 }
 void Class_Chassis::Output()
 {
-    Motor_Chassis_Left.Set_Target_Omega(Chassis_Omega);
-    Motor_Chassis_Right.Set_Target_Omega(Chassis_Omega);
+
+//注意轮子的实际正转速方向
+    Motor_Chassis_Left.Set_Target_Omega(Chassis_Omega_Left);
+    Motor_Chassis_Right.Set_Target_Omega(Chassis_Omega_Right);
 }

@@ -193,6 +193,10 @@ public:
     void Handle_RC_Data(uint8_t *data);
 
     Class_Chassis Chassis;
+
+    Class_PID Chassis_Banlance;//底盘平衡PID
+
+    Class_PID Chassis_Banlance_TargetAngle;//目标角度PID
     //
 
     // 静态实例指针，用于回调函数访问
@@ -284,9 +288,9 @@ protected:
     uint8_t flag_jump = 0;
 
     /** @brief MIT控制模式参数：KP刚度(默认5.5), KD阻尼(0.1), 角度, 角速度, 前馈扭矩 */
-    float kp = 5.5f,kd = 1.0f,angle = 0.0f,Omega = 0.0f,Torque = 0.00f;
+    float kp = 28.5f,kd = 2.2f,angle = 0.0f,Omega = 0.0f,Torque = 0.00f;
 
-
+    float Banlance_Kp = 5.0f,  Banlance_Kd = 0.1f;//遥控器控制初始量
 
 
     // 初始化相关常量

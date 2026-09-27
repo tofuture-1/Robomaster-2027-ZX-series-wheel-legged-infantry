@@ -30,7 +30,8 @@ void Robot_Init_Task()
     FDCAN_Init(&hfdcan2, Device_FDCAN2_Callback);
     FDCAN_Init(&hfdcan3, Device_FDCAN3_Callback);
     // UART初始化
-    UART_Init(&huart10, USART10_RX_Callback, 32);
+    UART_Init(&huart7, FSIA6B_RX_Callback, 32);
+    //UART_Init(&huart7, USART2_RX_Callback, 32);
     //SPI初始化
     SPI_Init(&hspi2, BMI088_SPI2_Callback);
 

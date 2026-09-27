@@ -27,7 +27,7 @@ void BMI088_SPI2_Callback(uint16_t Length);
 
 void TIM6_Robot_1ms_Callback();
     
-void USART10_RX_Callback(uint8_t *Buffer, uint16_t Length);
+void FSIA6B_RX_Callback(uint8_t *Buffer, uint16_t Length);
 
 
 #endif //C_BOARD_CALLBACK_TASK_H

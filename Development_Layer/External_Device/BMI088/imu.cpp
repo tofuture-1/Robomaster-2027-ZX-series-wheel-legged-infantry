@@ -11,15 +11,20 @@ void Class_Board_IMU::Init(SPI_HandleTypeDef *hspi)
     this->dt = 0.001f;
     BMI088_Init(hspi);
 
-    IMU_QuaternionEKF_Init(10.0f, 0.001f, 10000000.0f, 1.0f, 0.0f);
+    // 原参数 R=1e7，加速度修正增益过小，三轴积分漂移；调小 R 增强重力修正
+    // IMU_QuaternionEKF_Init(10.0f, 0.001f, 10000000.0f, 1.0f, 0.0f);
+    IMU_QuaternionEKF_Init(81.5f, 0.0010f, 1295000.0f, 1.0f, 0.000f);
     INS.AccelLPF = 0.0085f;
 
     offset_flag = 1;
 
-    bmi088_data.GyroOffset[0] = 0.003191390214f;
-    bmi088_data.GyroOffset[1] = -0.00133049982f;
-    bmi088_data.GyroOffset[2] = -0.003365303324f;
-    bmi088_data.AccelScale = 1.0f;
+    // // 原固定零偏（手动标定值），与器件/温度偏差时会导致三轴积分漂移
+    // bmi088_data.GyroOffset[0] = 0.003191390214f;
+    // bmi088_data.GyroOffset[1] = -0.00133049982f;
+    // bmi088_data.GyroOffset[2] = -0.003365303324f;
+    // bmi088_data.AccelScale = 1.0f;
+    // 开机自动标定：机器人需静置约 2 秒，自动更新零偏与 AccelScale
+    BMI088_Calibrate(&bmi088_data, hspi, 2000);
 }
 
 /**
@@ -64,8 +69,8 @@ void Class_Board_IMU::Update(void)
     BodyFrameToEarthFrame(INS.MotionAccel_b, INS.MotionAccel_n, INS.q);
 
     INS.Yaw = QEKF_INS.Yaw;
-    INS.Roll = QEKF_INS.Pitch;
-    INS.Pitch = QEKF_INS.Roll;
+    INS.Roll = QEKF_INS.Roll;
+    INS.Pitch = QEKF_INS.Pitch;//直连
     INS.YawTotalAngle = QEKF_INS.YawTotalAngle;
 }
 

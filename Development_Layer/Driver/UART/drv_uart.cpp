@@ -76,8 +76,8 @@ static void UART_Dispatch_Service(Struct_UART_Manage_Object* obj, uint16_t Size)
  * @param Size 
  */
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
-    if (!init_finished) return;
-    
+
+
     // 半传输事件不触发缓冲切换：DMA未完成，切换到另一缓冲区会导致TC时取错buffer
     if (HAL_UARTEx_GetRxEventType(huart) == HAL_UART_RXEVENT_HT) {
         return;
@@ -96,6 +96,15 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
         case UART9_BASE:  obj = UART9_Object; break;
         case USART10_BASE: obj = UART10_Object; break;
     }
+    if (!init_finished) {
+        // 初始化未完成：丢弃这包数据，但必须重新挂起 DMA，否则串口永久停收
+        HAL_UARTEx_ReceiveToIdle_DMA(obj->huart,
+                                     obj->Rx_Buffer[obj->Rx_Slot_Index],
+                                     obj->Max_Rx_Length);
+        return;
+    }
+    //I：解决init_finished导致的时序竞争问题
+
     if (obj) UART_Dispatch_Service(obj, Size);
 }
 

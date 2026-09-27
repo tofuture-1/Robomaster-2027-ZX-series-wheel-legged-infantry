@@ -56,7 +56,7 @@ inline float Class_Chassis_Motor_DJI_C620::Get_Now_Filter_Omega()
 
 
 /**
- * @brief Specialized, 发射机构类
+ * @brief Specialized, 底盘类-测试
  *
  */
 class Class_Chassis
@@ -68,14 +68,15 @@ public:
     Class_Chassis_Motor_DJI_C620 Motor_Chassis_Right;
 
 
-
     void Init();
 
 
     inline float Get_Chassis_Omega();
 
 
-    inline void Set_Chassis_Omega(float __Chassis_Omega);
+    inline void Set_Chassis_Omega(float __Chassis_Omega_Left,float __Chassis_Omega_Right);
+    inline void Set_Banclce_Kp(float __Kp);
+    inline void Set_Banclce_Kd(float __Kd);
 
 
     void RTOS_100ms_Alive_Callback();
@@ -92,6 +93,7 @@ protected:
 
 
 
+
     // 读变量
 
 
@@ -105,7 +107,16 @@ protected:
 
 
     //目标转速
-    float Chassis_Omega = 0.0f;
+    float Chassis_Omega_Left = 0.0f;
+    float Chassis_Omega_Right = 0.0f;
+
+    //IMU-PID相关参数
+    float Banlance_Kp;
+    float Banlance_Kd;
+
+    //直立环控制输出量
+    float Banlance_Out;
+
 
 
 
@@ -116,8 +127,17 @@ protected:
     void Output();
 };
 
-inline float Class_Chassis::Get_Chassis_Omega(){return Chassis_Omega;}
+inline float Class_Chassis::Get_Chassis_Omega(){return Chassis_Omega_Left;}
 
 
-inline void Class_Chassis::Set_Chassis_Omega(float __Chassis_Omega){Chassis_Omega = __Chassis_Omega;}
+inline void Class_Chassis::Set_Chassis_Omega(float __Chassis_Omega_Left,float __Chassis_Omega_Right)
+{
+    Chassis_Omega_Left = __Chassis_Omega_Left;
+    Chassis_Omega_Right = __Chassis_Omega_Right;
+}
+
+inline void Class_Chassis::Set_Banclce_Kp(float __Kp){Banlance_Kp = __Kp;}
+inline void Class_Chassis::Set_Banclce_Kd(float __Kd){Banlance_Kd = __Kd;}
+
+
 #endif //H7_BOARD_CHASSIS_H

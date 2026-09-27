@@ -38,7 +38,9 @@ public:
     inline float Get_Gyro_Y(void) const { return INS.Gyro[IMU_Y]; }
     inline float Get_Gyro_Z(void) const { return INS.Gyro[IMU_Z]; }
     inline float Get_Roll(void) const { return INS.Roll; }
-    inline float Get_Pitch(void) const { return INS.Pitch; }
+    inline float Get_Pitch(void) const { float p = INS.Pitch;
+        if (p < 0.0f) p += 360.0f;
+        return p; }
     inline float Get_Yaw(void) const { return INS.Yaw; }
     inline float Get_YawTotalAngle(void) const { return INS.YawTotalAngle; }
     inline float Get_dt(void) const { return dt; }
