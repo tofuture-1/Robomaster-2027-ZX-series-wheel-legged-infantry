@@ -7,6 +7,8 @@
 #include <stdint.h>
 #include "drv_uart.h"
 
+#define FS_IA6B_FRAME_LENGTH 32
+
 enum Enum_FS_IA6B_Status {
     FS_IA6B_Status_DISABLE = 0,
     FS_IA6B_Status_ENABLE,
@@ -29,6 +31,7 @@ class Class_FS_IA6B
 
 
     inline int16_t Get_Ibus_msg(int8_t i);//获取接收机回传后被储存的源数据TODO：待进行封装,最好不要在后续直接读取通道值用以调用
+    inline Enum_FS_IA6B_Status Get_Status();
 
     void UART_RxCpltCallback(uint8_t *Rx_Data,uint16_t Length);
     void RTOS_100ms_Alive_Callback();
@@ -43,9 +46,9 @@ class Class_FS_IA6B
 
     Ibus_msg FS_IA6B_ibus_msg;
 
-    void Data_Process(uint8_t *Rx_Frame);
+    bool Data_Process(uint8_t *Rx_Frame);
 };
 
-inline int16_t Class_FS_IA6B::Get_Ibus_msg(int8_t i){return FS_IA6B_ibus_msg.ch[i];};
-
+inline int16_t Class_FS_IA6B::Get_Ibus_msg(int8_t i){return FS_IA6B_ibus_msg.ch[i];}
+inline Enum_FS_IA6B_Status Class_FS_IA6B::Get_Status(){return FS_IA6B_Status;}
 #endif //RC_ROBOTDOG_REBUILD20260605_FS_I6X_H

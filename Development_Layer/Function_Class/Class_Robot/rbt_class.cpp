@@ -508,9 +508,8 @@ void CLASS_ROBOT::Chassis_Control() {
 
 
     FSi6x_control_polar();
-    Foot1_Left.Foot_control();
 
-    Foot2_Right.Foot_control();
+
 
 
     // float gimbal_yaw = Gimbal.Motor_Yaw.Get_Real_Angle();
@@ -903,7 +902,7 @@ void CLASS_ROBOT::Status_Control()
 {
   // ����ͼ����·��λ�����жϿ�����Դ��N��Ϊң��������ģʽ��S��Ϊ�������ģʽ
   // ͼ����·��λֵ: C=0, N=3, S=6 (��������״̬)
-  if (VT03.Get_Status() == FS_IA6B_Status_ENABLE)
+  if (VT03.Get_Status() == VTM_RX_Status_ENABLE)
   {
     if (VT03.Get_Mode_Switch() == VTM_RX_Mode_Switch_N)
     {
@@ -1149,59 +1148,61 @@ float f2_in_angle;
 void CLASS_ROBOT ::FSi6x_control_polar()//极坐标系
 {
 
-    if (FS_I6X.Get_Ibus_msg(5) >= 1751  )
+    if (FS_I6X.Get_Status() == FS_IA6B_Status_ENABLE)
     {
+        if (FS_I6X.Get_Ibus_msg(5) >= 1751  )
+        {
 
-        theta_polar = Math_Int_To_Float(FS_I6X.Get_Ibus_msg(3),1000,2000,3.925f,5.495f);
-        R = Math_Int_To_Float(FS_I6X.Get_Ibus_msg(2),1000,2000,0.125f,0.450f);
-        //theta_polar = 4.4f;
-    }
-    // else if (fsia6b_msg.ch[4] >= 1751  )
-    // {
-    //     theta_polar = 4.71f;   // 270°,正下方
-    //     R           = 0.15f;   // 已知腿长 15cm
-    //
-    // }
-    // Debug.Plot(1,Omega_Left_Now);
+            theta_polar = Math_Int_To_Float(FS_I6X.Get_Ibus_msg(3),1000,2000,3.925f,5.495f);
+            R = Math_Int_To_Float(FS_I6X.Get_Ibus_msg(2),1000,2000,0.125f,0.450f);
+            //theta_polar = 4.4f;
+        }
+        // else if (fsia6b_msg.ch[4] >= 1751  )
+        // {
+        //     theta_polar = 4.71f;   // 270°,正下方
+        //     R           = 0.15f;   // 已知腿长 15cm
+        //
+        // }
+        // Debug.Plot(1,Omega_Left_Now);
 
-    if (FS_I6X.Get_Ibus_msg(4) >= 1751)
-    {
+        if (FS_I6X.Get_Ibus_msg(4) >= 1751)
+        {
 
-        Omega_Left = Math_Int_To_Float(FS_I6X.Get_Ibus_msg(1),1000,2000,-20.0f,+20.0f) + Math_Int_To_Float(FS_I6X.Get_Ibus_msg(0),1000,2000,-10.0f,+10.0f);
-        Omega_Right = Math_Int_To_Float(FS_I6X.Get_Ibus_msg(1),1000,2000,-20.0f,+20.0f) - Math_Int_To_Float(FS_I6X.Get_Ibus_msg(0),1000,2000,-10.0f,+10.0f);
-        //防止遥控器不能完全归中引起的小速度进入pid积分环节造成间断性第旋转
-        //注意两轮的实际正转速方向
-        // Debug.Plot(1,Omega_Left);
-    }else
-    {
-        Omega_Left = 0.0f;
-        Omega_Right = 0.0f;
+            Omega_Left = Math_Int_To_Float(FS_I6X.Get_Ibus_msg(1),1000,2000,-20.0f,+20.0f) + Math_Int_To_Float(FS_I6X.Get_Ibus_msg(0),1000,2000,-10.0f,+10.0f);
+            Omega_Right = Math_Int_To_Float(FS_I6X.Get_Ibus_msg(1),1000,2000,-20.0f,+20.0f) - Math_Int_To_Float(FS_I6X.Get_Ibus_msg(0),1000,2000,-10.0f,+10.0f);
+            //防止遥控器不能完全归中引起的小速度进入pid积分环节造成间断性第旋转
+            //注意两轮的实际正转速方向
+            // Debug.Plot(1,Omega_Left);
+        }else
+        {
+            Omega_Left = 0.0f;
+            Omega_Right = 0.0f;
 
-    }
+        }
 
-    // ===== 平衡控制方案选择：MPC_Balance(LESO+ADRC+LQR) vs 原 Chassis_Banlance PID =====
-    balance_out = 0.0f;
+        // ===== 平衡控制方案选择：MPC_Balance(LESO+ADRC+LQR) vs 原 Chassis_Banlance PID =====
+        balance_out = 0.0f;
 
-    // if (Use_MPC_Balance) {
-    //     // 方案①：LESO(ADRC) + LQR(=无约束MPC)，倾角单通道
-    //     //  theta      = (Get_Pitch - Target_angle) 小角化，rad
-    //     //  theta_dot  = 陀螺Y轴(倾角轴)，rad/s —— 若方向/轴不对，换成 Get_Gyro_X 或加负号
-    //     float theta     = (BMI088.Get_Pitch() - Target_angle) * DEG_TO_RAD;
-    //     float theta_dot = BMI088.Get_Gyro_Y();                       // TODO: 确认倾角轴与符号
-    //     // 可选：遥控覆盖 LQR 增益（默认不启用，用 LQR 自动算的 K1/K2）
-    //     // MPC_Balance.Set_Gains(Math_Int_To_Float(fsia6b_msg.ch[8],1000,2000,-50.0f,-10.0f),
-    //     //                        Math_Int_To_Float(fsia6b_msg.ch[9],1000,2000,-15.0f,-3.0f));
-    //     if (fsia6b_msg.ch[7] >= 1751) {
-    //         balance_out = MPC_Balance.Compute(theta, theta_dot, 0.0f);
-    //     } else {
-    //         MPC_Balance.Reset();       // 未启用时复位，防积分/LESO状态积累(windup)
-    //     }
-    // } else {
+        // if (Use_MPC_Balance) {
+        //     // 方案①：LESO(ADRC) + LQR(=无约束MPC)，倾角单通道
+        //     //  theta      = (Get_Pitch - Target_angle) 小角化，rad
+        //     //  theta_dot  = 陀螺Y轴(倾角轴)，rad/s —— 若方向/轴不对，换成 Get_Gyro_X 或加负号
+        //     float theta     = (BMI088.Get_Pitch() - Target_angle) * DEG_TO_RAD;
+        //     float theta_dot = BMI088.Get_Gyro_Y();                       // TODO: 确认倾角轴与符号
+        //     // 可选：遥控覆盖 LQR 增益（默认不启用，用 LQR 自动算的 K1/K2）
+        //     // MPC_Balance.Set_Gains(Math_Int_To_Float(fsia6b_msg.ch[8],1000,2000,-50.0f,-10.0f),
+        //     //                        Math_Int_To_Float(fsia6b_msg.ch[9],1000,2000,-15.0f,-3.0f));
+        //     if (fsia6b_msg.ch[7] >= 1751) {
+        //         balance_out = MPC_Balance.Compute(theta, theta_dot, 0.0f);
+        //     } else {
+        //         MPC_Balance.Reset();       // 未启用时复位，防积分/LESO状态积累(windup)
+        //     }
+        // } else {
         // ===== 原方案：Chassis_Banlance PID（保留原逻辑）=====
-    Chassis_Banlance_TargetAngle.Set_K_P(1.3f);
-    Chassis_Banlance_TargetAngle.Set_K_I(0.15f);
-    Chassis_Banlance_TargetAngle.Set_K_D(0.015f);
-    Chassis_Banlance_TargetAngle.Set_Out_Max(15.0f);
+        Chassis_Banlance_TargetAngle.Set_K_P(1.3f);
+        Chassis_Banlance_TargetAngle.Set_K_I(0.15f);
+        Chassis_Banlance_TargetAngle.Set_K_D(0.015f);
+        Chassis_Banlance_TargetAngle.Set_Out_Max(15.0f);
 
 
 
@@ -1213,63 +1214,67 @@ void CLASS_ROBOT ::FSi6x_control_polar()//极坐标系
 
 
 
-    // }
+        // }
 
-    if (FS_I6X.Get_Ibus_msg(7) >= 1751  )
-    {
-        Omega_Left_Now = Chassis.Motor_Chassis_Left.Get_Now_Omega();//逆时针转为正,此时机器人速度向前
-        Omega_Right_Now = Chassis.Motor_Chassis_Right.Get_Now_Omega();
-        Math_Constrain(&Omega_Left_Now,-5.0f,+5.0f);
-        Math_Constrain(&Omega_Right_Now,-5.0f,+5.0f);
-
-        if (FS_I6X.Get_Ibus_msg(6) >= 1500)
+        if (FS_I6X.Get_Ibus_msg(7) >= 1751  )
         {
-            Chassis_Banlance_TargetAngle.Set_Now((Omega_Left_Now - Omega_Right_Now)/2);
-            Chassis_Banlance_TargetAngle.Set_Target((Omega_Left + Omega_Right)/2);//通过控制目标速度值实现实际上的前进后退？
-            Chassis_Banlance_TargetAngle.PID_Process();
-            Target_angle = Pre_Target_angle - Chassis_Banlance_TargetAngle.Get_Out();
-//目前实际作用为腿部角度控制
+            Omega_Left_Now = Chassis.Motor_Chassis_Left.Get_Now_Omega();//逆时针转为正,此时机器人速度向前
+            Omega_Right_Now = Chassis.Motor_Chassis_Right.Get_Now_Omega();
+            Math_Constrain(&Omega_Left_Now,-5.0f,+5.0f);
+            Math_Constrain(&Omega_Right_Now,-5.0f,+5.0f);
+
+            if (FS_I6X.Get_Ibus_msg(6) >= 1500)
+            {
+                Chassis_Banlance_TargetAngle.Set_Now((Omega_Left_Now - Omega_Right_Now)/2);
+                Chassis_Banlance_TargetAngle.Set_Target((Omega_Left + Omega_Right)/2);//通过控制目标速度值实现实际上的前进后退？
+                Chassis_Banlance_TargetAngle.PID_Process();
+                Target_angle = Pre_Target_angle - Chassis_Banlance_TargetAngle.Get_Out();
+                //目前实际作用为腿部角度控制
+            }else
+            {
+                Target_angle = 178.0f;
+            }
+
+            Chassis_Banlance.Set_Now(BMI088.Get_Pitch());
+            Chassis_Banlance.Set_Target(Pre_Target_angle);
+            Chassis_Banlance.PID_Process();
+            balance_out = Chassis_Banlance.Get_Out();
+
+
+
+            Chassis.Set_Chassis_Omega(balance_out,-balance_out);
+            // theta_polar = theta_polar - Pi*(BMI088.Get_Pitch()-Target_angle - 2.65f*((Omega_Right-Omega_Right_Now)+(Omega_Left+Omega_Left_Now) )/2 )/360.0f;
+            theta_polar = theta_polar - Pi*(BMI088.Get_Pitch()-Target_angle)/180.0f;//向后倒时Get_Pitch的值减小
         }else
         {
-            Target_angle = 178.0f;
+            Chassis.Set_Chassis_Omega(-Omega_Left,Omega_Right);
+
+            balance_out = 0.0f;
         }
 
-        Chassis_Banlance.Set_Now(BMI088.Get_Pitch());
-        Chassis_Banlance.Set_Target(Pre_Target_angle);
-        Chassis_Banlance.PID_Process();
-        balance_out = Chassis_Banlance.Get_Out();
+
+        /** @brief 极坐标→直角坐标转换：由极径R和极角theta_polar计算机身参考位姿(X,Y) */
+        //极坐标转换成直角坐标
+        X = cos(theta_polar) * R;
+        Y = sin(theta_polar) * R;
+
+        Xe1 = X;
+        Ye1 = Y;
+        Xe2 = X;
+        Ye2 = Y;
+
+        Foot1_Left.Set_x_y(Xe1,Ye1);
+        Foot2_Right.Set_x_y(Xe2,Ye2);
 
 
 
-        Chassis.Set_Chassis_Omega(balance_out,-balance_out);
-        // theta_polar = theta_polar - Pi*(BMI088.Get_Pitch()-Target_angle - 2.65f*((Omega_Right-Omega_Right_Now)+(Omega_Left+Omega_Left_Now) )/2 )/360.0f;
-        theta_polar = theta_polar - Pi*(BMI088.Get_Pitch()-Target_angle)/180.0f;//向后倒时Get_Pitch的值减小
-    }else
-    {
-        Chassis.Set_Chassis_Omega(-Omega_Left,Omega_Right);
+        // f1_in_angle = Foot1_Left.Get_in_set_angle();
+        // f1_out_angle = Foot1_Left.Get_out_set_angle();//id=1
+        // f2_in_angle = Foot2_Right.Get_in_set_angle();
+        // f2_out_angle = Foot2_Right.Get_out_set_angle();//id=3
+        Foot1_Left.Foot_control();
+        Foot2_Right.Foot_control();//HACK：最好不要放进该if，否则每次遥控器抖动/掉线，腿部电机都会经历一次"失去心跳 → 超时失能 → 重新使能"，机器人会瞬间瘫软。掉线时正确的做法是下发安全指令（保持位姿 / 阻尼 / 缓慢失能），而不是干脆不发。
 
-        balance_out = 0.0f;
-    }
-
-
-    /** @brief 极坐标→直角坐标转换：由极径R和极角theta_polar计算机身参考位姿(X,Y) */
-    //极坐标转换成直角坐标
-    X = cos(theta_polar) * R;
-    Y = sin(theta_polar) * R;
-
-    Xe1 = X;
-    Ye1 = Y;
-    Xe2 = X;
-    Ye2 = Y;
-
-    Foot1_Left.Set_x_y(Xe1,Ye1);
-    Foot2_Right.Set_x_y(Xe2,Ye2);
-
-
-
-    // f1_in_angle = Foot1_Left.Get_in_set_angle();
-    // f1_out_angle = Foot1_Left.Get_out_set_angle();//id=1
-    // f2_in_angle = Foot2_Right.Get_in_set_angle();
-    // f2_out_angle = Foot2_Right.Get_out_set_angle();//id=3
+        }
 }
 

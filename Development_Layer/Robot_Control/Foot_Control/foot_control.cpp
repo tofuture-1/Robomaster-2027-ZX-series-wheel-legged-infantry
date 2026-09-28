@@ -5,19 +5,19 @@
 #include "foot_control.h"
 #include "Motor_DM.h"
 
-void Class_SingleDogFoot_DM::SingleFoot_Init(FDCAN_HandleTypeDef *M_back_hfdcan, uint16_t M_back_CAN_Rx_ID,uint16_t  M_back_CAN_Tx_ID,
-	FDCAN_HandleTypeDef *M_front_hfdcan,uint16_t M_front_CAN_Rx_ID, uint16_t M_front_CAN_Tx_ID,uint8_t L_R_sidex,
+void Class_SingleDogFoot_DM::SingleFoot_Init(FDCAN_HandleTypeDef *m_back_hfdcan, uint16_t m_back_CAN_Rx_ID,uint16_t  m_back_CAN_Tx_ID,
+	FDCAN_HandleTypeDef *m_front_hfdcan,uint16_t m_front_CAN_Rx_ID, uint16_t m_front_CAN_Tx_ID,uint8_t L_R_sidex,
 	float kp, float kd, float Angle,float Omega,float Torque)
 {
 	L_R_side = L_R_sidex;
 
-	M_back_hfdcan = M_back_hfdcan;
-	M_back_CAN_Rx_ID = M_back_CAN_Rx_ID;
-	M_back_CAN_Tx_ID = M_back_CAN_Tx_ID;
+	M_back_hfdcan = m_back_hfdcan;//已完成此前成员变量名和函数传入参数名冲突的修改
+	M_back_CAN_Rx_ID = m_back_CAN_Rx_ID;
+	M_back_CAN_Tx_ID = m_back_CAN_Tx_ID;
 
-	M_front_hfdcan = M_front_hfdcan;
-	M_front_CAN_Rx_ID = M_front_CAN_Rx_ID;
-	M_front_CAN_Tx_ID = M_front_CAN_Tx_ID;
+	M_front_hfdcan = m_front_hfdcan;
+	M_front_CAN_Rx_ID = m_front_CAN_Rx_ID;
+	M_front_CAN_Tx_ID = m_front_CAN_Tx_ID;
 
 	M_back.Init(M_back_hfdcan, M_back_CAN_Rx_ID, M_back_CAN_Tx_ID);
 	M_front.Init(M_front_hfdcan, M_front_CAN_Rx_ID, M_front_CAN_Tx_ID);

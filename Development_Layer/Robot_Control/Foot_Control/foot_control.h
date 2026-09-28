@@ -8,13 +8,13 @@
 #include "Motor_DM.h"
 
 
-#define Long_L 0.250
-#define Short_L 0.210
+#define Long_L 0.250f
+#define Short_L 0.210f
 
 
-#define Pi 3.14159
-#define Low_limit (-1.40)//低位软件主动杆限位（未考虑从动杆与下限位干涉）
-#define High_limit 1.0//高位软件主动杆限位，注意应用在实际比较中需要考虑实际大小关系；dm电机逆时针旋转角度值减少
+#define Pi 3.14159f
+#define Low_limit (-1.40f)//低位软件主动杆限位（未考虑从动杆与下限位干涉）
+#define High_limit 1.0f//高位软件主动杆限位，注意应用在实际比较中需要考虑实际大小关系；dm电机逆时针旋转角度值减少
 //#define Map_unit 1.8325957 // Pi*105/180
 #define Right 1
 #define Left 0
@@ -29,8 +29,8 @@
  */
 class Class_SingleDogFoot_DM{
 public:
-    void SingleFoot_Init(FDCAN_HandleTypeDef *M_back_hfdcan, uint16_t M_back_CAN_Rx_ID,uint16_t  M_back_CAN_Tx_ID,
-    FDCAN_HandleTypeDef *M_front_hfdcan,uint16_t M_front_CAN_Rx_ID, uint16_t M_front_CAN_Tx_ID,uint8_t L_R_sidex,
+    void SingleFoot_Init(FDCAN_HandleTypeDef *m_back_hfdcan, uint16_t m_back_CAN_Rx_ID,uint16_t  m_back_CAN_Tx_ID,
+    FDCAN_HandleTypeDef *m_front_hfdcan,uint16_t m_front_CAN_Rx_ID, uint16_t m_front_CAN_Tx_ID,uint8_t L_R_sidex,
     float kp, float kd, float Angle = 0.0f,float Omega = 0.0f,float Torque = 0.0f);
 
     int8_t FootXY_map_MotorAngle();
