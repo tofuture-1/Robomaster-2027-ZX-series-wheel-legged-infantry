@@ -160,8 +160,8 @@ uint16_t BMI088_Init(SPI_HandleTypeDef *hspi)
 }
 
 void BMI088_Read_Accel(SPI_HandleTypeDef *hspi, IMU_Data_t *data)
-{
-    uint8_t tx_buf[8] = {ACC_X_LSB_ADDR | 0x80, 0xFF, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55};
+{//TODO:完成对IMU读取数据底层实现的理解
+    uint8_t tx_buf[8] = {ACC_X_LSB_ADDR | 0x80, 0xFF, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55};//ACC_X_LSB_ADDR 本身是一个 7 位地址（比如 0x12），直接发会变成写操作。所以要 | 0x80 把最高位置 1，告诉芯片"我要读"。
     uint8_t rx_buf[8] = {0};
 
     HAL_GPIO_WritePin(BMI088_ACC_GPIOx, BMI088_ACC_GPIOp, GPIO_PIN_RESET);
@@ -192,16 +192,48 @@ void BMI088_Read_Gyro(SPI_HandleTypeDef *hspi, IMU_Data_t *data)
     gyro_raw[1] = (int16_t)(((int16_t)rx_buf[4] << 8) | rx_buf[3]);
     gyro_raw[2] = (int16_t)(((int16_t)rx_buf[6] << 8) | rx_buf[5]);
 
-    // 始终返回原始数据，不进行零偏补偿
+    // 始终返回原始数据，不进行零偏补偿（放在上层好解耦）
     data->Gyro[0] = (float)gyro_raw[0] * BMI088_GYRO_2000_SEN;
     data->Gyro[1] = (float)gyro_raw[1] * BMI088_GYRO_2000_SEN;
     data->Gyro[2] = (float)gyro_raw[2] * BMI088_GYRO_2000_SEN;
+}
+
+
+
+
+void BMI088_Read_Temp(SPI_HandleTypeDef *hspi, IMU_Data_t *data)//HACK：最好放进非1ms中进行读取，本来硬件读取出来的更新频率就不高——1.28s
+{
+    uint8_t tx_buf[3] = {TEMP_MSB_ADDR | 0x80, 0x55,0x55};//TODO:是否？
+    uint8_t rx_buf[3] = {0};//TODO：理解此处数组长度设置的根据
+
+    HAL_GPIO_WritePin(BMI088_ACC_GPIOx, BMI088_ACC_GPIOp, GPIO_PIN_RESET);
+    HAL_SPI_TransmitReceive(hspi, tx_buf, rx_buf, 3, 100);
+    HAL_GPIO_WritePin(BMI088_ACC_GPIOx, BMI088_ACC_GPIOp, GPIO_PIN_SET);
+
+    uint16_t Temp_raw_uint11;
+    Temp_raw_uint11 = (int16_t)(((int16_t)rx_buf[2] << 3) | rx_buf[1] >> 5);
+
+    int16_t Temp_int11;
+
+    if (Temp_raw_uint11 > 1023)
+    {
+        Temp_int11 = Temp_raw_uint11 - 2048;
+    }
+    else
+    {
+        Temp_int11 = Temp_raw_uint11;
+    }//利用补码转换成11位有符号
+
+
+    data->Temp= (float)Temp_int11 * TEMP_UNIT + TEMP_BIAS;
+
 }
 
 void BMI088_Read_IMU(SPI_HandleTypeDef *hspi, IMU_Data_t *data)
 {
     BMI088_Read_Accel(hspi, data);
     BMI088_Read_Gyro(hspi, data);
+    BMI088_Read_Temp(hspi, data);
 }
 
 void BMI088_Calibrate(IMU_Data_t *data, SPI_HandleTypeDef *hspi, uint16_t cali_times)

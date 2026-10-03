@@ -272,6 +272,8 @@ public:
 
     void RTOS_100ms_Calculate_Callback();
 
+    void RTOS_100ms_Conmunicate_Callback();
+
     void RTOS_1ms_Conmunicate_Callback();
 
     void RTOS_1ms_Calculate_Callback();

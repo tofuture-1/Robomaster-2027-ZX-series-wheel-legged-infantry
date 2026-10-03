@@ -81,6 +81,7 @@ typedef struct
     float Accel[3];
     float Gyro[3];
     float GyroOffset[3];
+    float Temp;
     float gNorm;
     float AccelScale;
 } IMU_Data_t;
@@ -89,6 +90,8 @@ uint16_t BMI088_Init(SPI_HandleTypeDef *hspi);
 
 void BMI088_Read_Accel(SPI_HandleTypeDef *hspi, IMU_Data_t *data);
 void BMI088_Read_Gyro(SPI_HandleTypeDef *hspi, IMU_Data_t *data);
+void BMI088_Read_Temp(SPI_HandleTypeDef *hspi, IMU_Data_t *data);
+
 void BMI088_Read_IMU(SPI_HandleTypeDef *hspi, IMU_Data_t *data);
 
 void BMI088_Calibrate(IMU_Data_t *data, SPI_HandleTypeDef *hspi, uint16_t cali_times);

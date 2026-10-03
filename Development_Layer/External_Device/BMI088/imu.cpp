@@ -25,6 +25,10 @@ void Class_Board_IMU::Init(SPI_HandleTypeDef *hspi)
     // bmi088_data.AccelScale = 1.0f;
     // 开机自动标定：机器人需静置约 2 秒，自动更新零偏与 AccelScale
     BMI088_Calibrate(&bmi088_data, hspi, 2000);
+
+    IMU_PID_Heater.Init(2.0f,0.3f,2.0f,0.067f,0.0f,5.0f,20.0f,0.1,0.125f);
+
+
 }
 
 /**
@@ -45,6 +49,7 @@ void Class_Board_IMU::Update(void)
     INS.Gyro[IMU_Y] = bmi088_data.Gyro[IMU_Y] - bmi088_data.GyroOffset[IMU_Y];
     INS.Gyro[IMU_Z] = bmi088_data.Gyro[IMU_Z] - bmi088_data.GyroOffset[IMU_Z];
 
+    INS.Temperature = bmi088_data.Temp;
     // 更新静态检测
     Update_Stationary_Detection();
 
@@ -74,6 +79,43 @@ void Class_Board_IMU::Update(void)
     INS.YawTotalAngle = QEKF_INS.YawTotalAngle;
 }
 
+
+void Class_Board_IMU::IMU_Heater_SetPower(uint8_t percentage)
+{
+
+    if (percentage >100) percentage = 100;
+    if (percentage < 0) percentage = 0;//做上下限制
+
+    uint32_t compare_value = (uint32_t)((float)percentage / 100.0f * 2750.0f);
+
+    if (compare_value > 2749) compare_value = 2749;
+
+    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, compare_value);
+}
+
+void Class_Board_IMU::IMU_Heater_Control(uint16_t Target_temp)
+{
+    IMU_PID_Heater.Set_Target(Target_temp);
+    IMU_PID_Heater.Set_Now(Get_Temp());
+
+    IMU_PID_Heater.PID_Process();
+
+
+    if (Get_Temp() < IMU_HEARTER_MAX_TEMPERATURE )
+    {
+        IMU_Heater_SetPower(IMU_PID_Heater.Get_Out());
+        if (Get_Temp() >= Target_temp )
+        {
+            IMU_PID_Heater.Set_Integral_Error(0);//到达目标后清空积分误差，避免积分负饱和
+        }
+    }else
+    {
+        IMU_Heater_SetPower(0);//多一层过温保护
+
+    }
+    //封装好并实现相对稳定的控制算法2609302010
+
+}
 /**
  * @brief IMU采样任务，读取传感器原始数据
  */

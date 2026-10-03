@@ -2,18 +2,26 @@
 #define C_BOARD_IMU_H
 
 #include <cstdint>
+#include <drv_tim.h>
+#include <PID.h>
 #include "BMI088_Driver.h"
 #include "QuaternionEKF.h"
 
 #define IMU_X 0
 #define IMU_Y 1
 #define IMU_Z 2
+#define IMU_HEARTER_MAX_TEMPERATURE 65.0f
 
 class Class_Board_IMU
 {
 public:
     void Init(SPI_HandleTypeDef *hspi);
     void Update(void);
+
+    Class_PID IMU_PID_Heater;
+    //加热电阻占空比配置
+
+    void IMU_Heater_Control(uint16_t Target_temp);
 
     /**
      * @brief IMU采样任务，1ms周期调用，读取传感器原始数据
@@ -37,6 +45,7 @@ public:
     inline float Get_Gyro_X(void) const { return INS.Gyro[IMU_X]; }
     inline float Get_Gyro_Y(void) const { return INS.Gyro[IMU_Y]; }
     inline float Get_Gyro_Z(void) const { return INS.Gyro[IMU_Z]; }
+    inline float Get_Temp() const { return INS.Temperature; }//TODO:需要进一步体会此处const的用法
     inline float Get_Roll(void) const { return INS.Roll; }
     inline float Get_Pitch(void) const { float p = INS.Pitch;
         if (p < 0.0f) p += 360.0f;
@@ -60,6 +69,7 @@ public:
     inline void Set_dt(float dt_val) { dt = dt_val; }
 
 private:
+    void IMU_Heater_SetPower(uint8_t percentage);
     void BodyFrameToEarthFrame(const float *vecBF, float *vecEF, float *q);
     void EarthFrameToBodyFrame(const float *vecEF, float *vecBF, float *q);
     void Update_Gyro_Bias_Estimator(void);
@@ -67,7 +77,6 @@ private:
     static float Norm3(const float *v);
     static void Math_Constrain(float *val, float min, float max);
 
-private:
     SPI_HandleTypeDef *hspi;
     IMU_Data_t bmi088_data;
     float dt;
@@ -110,6 +119,7 @@ private:
         float q[4];
         float Gyro[3];
         float Accel[3];
+        float Temperature;
         float MotionAccel_b[3];
         float MotionAccel_n[3];
         float AccelLPF;
@@ -120,7 +130,7 @@ private:
         float Pitch;
         float Yaw;
         float YawTotalAngle;
-    } INS;
+    } INS;//Inertial Navigation System
 };
 
 extern Class_Board_IMU BMI088;

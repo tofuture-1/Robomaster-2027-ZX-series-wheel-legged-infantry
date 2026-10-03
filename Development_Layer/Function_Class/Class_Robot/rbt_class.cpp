@@ -249,11 +249,14 @@ void CLASS_ROBOT::Init() {
     //默认使用MIT模式
     Foot1_Left.SingleFoot_Init(&hfdcan1,0x12,0x02,&hfdcan1,0x11,0x01,Left,kp,kd,angle,Omega,-Torque);
     Foot2_Right.SingleFoot_Init(&hfdcan1,0x14,0x04,&hfdcan1,0x13,0x03,Right,kp,kd,angle,Omega,Torque);
+//TODO：等待封装并重新优化相关写法？
 
     Chassis.Init();
-    BMI088.Init(&hspi2);
-    Chassis_Banlance.Init(5.0f, 0.0f, 0.1f, 0.0f, 0.0f , 15.0f, 10.0f,0.001);
-    Chassis_Banlance_TargetAngle.Init(1.0f, 0.1f, 0.01f, 0.0f, 0.0f , 15.0f, 10.0f,0.001);
+    BMI088.Init(&hspi2);//202609301859完成初版效果较好的前馈PID温控（防积分饱和），并完成封装
+
+
+    Chassis_Banlance.Init(5.0f, 0.0f, 0.1f, 0.0f, 0.0f , 15.0f, 10.0f,0.001);//HACK:需要封装好
+    Chassis_Banlance_TargetAngle.Init(1.0f, 0.1f, 0.01f, 0.0f, 0.0f , 15.0f, 10.0f,0.001);//HACK:需要封装好
 
     FS_I6X.Init(&huart7);
     //
@@ -327,6 +330,7 @@ void CLASS_ROBOT::RTOS_100ms_Alive_PeriodElapsedCallback() {
 
     Chassis.RTOS_100ms_Alive_Callback();
     FS_I6X.RTOS_100ms_Alive_Callback();
+
   // VT03.RTOS_100ms_Alive_Callback();
   // The_Chassis.RTOS_100ms_Alive_Callback();
   // Gimbal.RTOS_100ms_Alive_Callback();
@@ -337,6 +341,21 @@ void CLASS_ROBOT::RTOS_100ms_Alive_PeriodElapsedCallback() {
   // TOF050F.TIM_100ms_Alive_PeriodElapsedCallback();
 }
 
+void CLASS_ROBOT::RTOS_100ms_Conmunicate_Callback()
+{
+
+}
+
+void CLASS_ROBOT::RTOS_100ms_Calculate_Callback()
+{
+
+    BMI088.IMU_Heater_Control(55.0f);
+    //HACK:初始化和该函数的调用逻辑链条不清晰
+
+
+    Debug.Plot(3,BMI088.Get_Temp(),BMI088.IMU_PID_Heater.Get_Out(),BMI088.IMU_PID_Heater.Get_Integral_Error());
+//调试用
+}
 /**
  * @brief ���㺯��
  *
@@ -345,6 +364,7 @@ void CLASS_ROBOT::RTOS_1ms_Calculate_Callback() {
 
     Chassis_Control();
     Chassis.RTOS_1ms_Calculate_Callback();
+
 
   //
   // // ������������Զ���
@@ -392,17 +412,17 @@ void CLASS_ROBOT::RTOS_1ms_Conmunicate_Callback() {
 
   // IMU 姿态 -> VOFA+ Cube 控件 (100Hz, 每 10ms 发一帧)
   // Cube 控件绑定: I0=Roll, I1=Pitch, I2=Yaw (欧拉角模式)
-  {
-    static uint8_t imu_plot_counter = 0;
-    imu_plot_counter++;
-    if (imu_plot_counter >= 10) {
-      imu_plot_counter = 0;
-      Debug.PlotEuler(BMI088.Get_Roll(),
-                      BMI088.Get_Pitch(),
-                      BMI088.Get_Yaw());
-        // Debug.Plot(2,fsia6b_msg.ch[1],Chassis.Motor_Chassis_Left.Get_Now_Omega());
-    }
-  }
+  // {
+  //   static uint8_t imu_plot_counter = 0;
+  //   imu_plot_counter++;
+  //   if (imu_plot_counter >= 10) {
+  //     imu_plot_counter = 0;
+  //     Debug.PlotEuler(BMI088.Get_Roll(),
+  //                     BMI088.Get_Pitch(),
+  //                     BMI088.Get_Yaw());
+  //       // Debug.Plot(2,fsia6b_msg.ch[1],Chassis.Motor_Chassis_Left.Get_Now_Omega());
+  //   }
+  // }
 
   RTOS_1ms_FDCAN_Motor_Callback();
   //
@@ -1077,7 +1097,8 @@ void CLASS_ROBOT::Main_Loop_Things() {
   // 100ms�����ж�
   if (robot_100ms_cycle_flag) {
     robot_100ms_cycle_flag = false;
-    RTOS_100ms_Alive_PeriodElapsedCallback();
+      RTOS_100ms_Calculate_Callback();
+      RTOS_100ms_Alive_PeriodElapsedCallback();
   }
   // 1000ms�����ж�
   if (robot_1000ms_cycle_flag) {
@@ -1215,8 +1236,9 @@ void CLASS_ROBOT ::FSi6x_control_polar()//极坐标系
 
 
         // }
-
-        if (FS_I6X.Get_Ibus_msg(7) >= 1751  )
+//XXX:注意，目前在开启ch7（swd）平衡的时候上拨ch4（swb）（即关闭当前这个函数）时，腿部会突然大角度往上收（同时触发通信超时导致的失能），并最终超出限位；另外，轮毂电机仍然会保持最后的旋转（但似乎不开启ch7时手动控制的速度会在8009p失能同时归0）
+        //HACK：目前的实现还是不太可行
+        if (FS_I6X.Get_Ibus_msg(7) >= 1751  )//XXX：目前腿部的二次补偿打开之后似乎会受轮组的目标速度值影响？？？
         {
             Omega_Left_Now = Chassis.Motor_Chassis_Left.Get_Now_Omega();//逆时针转为正,此时机器人速度向前
             Omega_Right_Now = Chassis.Motor_Chassis_Right.Get_Now_Omega();
@@ -1274,7 +1296,7 @@ void CLASS_ROBOT ::FSi6x_control_polar()//极坐标系
         // f2_out_angle = Foot2_Right.Get_out_set_angle();//id=3
         Foot1_Left.Foot_control();
         Foot2_Right.Foot_control();//HACK：最好不要放进该if，否则每次遥控器抖动/掉线，腿部电机都会经历一次"失去心跳 → 超时失能 → 重新使能"，机器人会瞬间瘫软。掉线时正确的做法是下发安全指令（保持位姿 / 阻尼 / 缓慢失能），而不是干脆不发。
-
+//FIXME：目前有轮毂电机在未接收到遥控下发的控制命令时偶发自动开始转动？
         }
 }
 

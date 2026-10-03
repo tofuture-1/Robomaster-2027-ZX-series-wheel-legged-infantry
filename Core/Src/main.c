@@ -109,9 +109,9 @@ int main(void)
   MX_USART10_UART_Init();
   MX_USART2_UART_Init();
   MX_SPI2_Init();
-  MX_UART5_Init();
   MX_TIM12_Init();
   MX_TIM6_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
   //机器人初始化

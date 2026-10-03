@@ -5,19 +5,32 @@
 #include "PID.h"
 
 /**
+ * @brief PID 控制器初始化
  *
- * @param K_p
- * @param K_i
- * @param K_d
- * @param K_f
- * @param Iout_Max
- * @param Output_Max
- * @param D_t
- * @param Dead_zone
- * @param I_Variable_A
- * @param I_Variable_B
- * @param Integral_Separate_Threshold
- * @param D_first
+ * @param K_p                          比例增益 P
+ * @param K_i                          积分增益 I
+ * @param K_d                          微分增益 D
+ * @param K_f                          速度前馈增益, 正比于 Target 本身
+ *                                     (仅当 Target 语义为"速度"时成立)
+ * @param K_ff                         加速度前馈增益, 正比于 Target 的一阶差分
+ *                                     有效增益 = K_ff * D_t
+ * @param IOut_Max                     积分项【输出】限幅幅值, 0 为不限制
+ *                                     (内部按 ±IOut_Max/K_i 限制积分累加值)
+ * @param Output_Max                   总输出限幅幅值(P+I+D+F 求和后), 0 为不限制,
+ *                                     建议显式传入, 默认 0 即不限制有风险
+ * @param D_t                          计算周期, 单位 s, 必须与实际调用
+ *                                     PID_Process() 的周期一致, 否则 I/D 量纲错误
+ * @param Dead_zone                    误差死区, 0 为无死区; 死区外误差会被
+ *                                     整体平移 Dead_zone 以保证输出连续
+ * @param I_Variable_A                 变速积分"定速内段"阈值, |error|<=A 时全速积分
+ * @param I_Variable_B                 变速积分"变速区间"上界, A<|error|<B 线性过渡,
+ *                                     |error|>=B 停止积分; 须满足 A < B,
+ *                                     且 A、B 同时为 0 时不启用
+ * @param Integral_Separate_Threshold  积分分离阈值, 须为正数, 0 为不启用;
+ *                                     |error| 超阈值时积分值直接清零
+ * @param D_first                      微分先行开关, PID_D_First_ENABLE 时
+ *                                     对测量值微分(抑制微分冲击),
+ *                                     DISABLE 时对误差微分
  */
 void Class_PID::Init(float K_p, float K_i, float K_d, float K_f, float K_ff,
                      float IOut_Max, float Output_Max, float D_t,

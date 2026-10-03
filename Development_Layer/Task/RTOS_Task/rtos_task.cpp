@@ -25,13 +25,17 @@ void Robot_Init_Task()
 
     //定时器初始化
     TIM_Init(&htim6, TIM6_Robot_1ms_Callback); //1ms定时器
+    TIM_Init(&htim3,nullptr);
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);//HACK:确定是这样调用吗？
+
+
     // CAN总线初始化
     FDCAN_Init(&hfdcan1, Device_FDCAN1_Callback);
     FDCAN_Init(&hfdcan2, Device_FDCAN2_Callback);
-    FDCAN_Init(&hfdcan3, Device_FDCAN3_Callback);
+    FDCAN_Init(&hfdcan3, Device_FDCAN3_Callback);//TODO：是否需要封装进入外设模块的初始化中？
     // UART初始化
-    UART_Init(&huart7, FSIA6B_RX_Callback, 32);
-    //UART_Init(&huart7, USART2_RX_Callback, 32);
+    //UART_Init(&huart7, FSIA6B_RX_Callback, 32);
+    //UART_Init(&huart7, USART2_RX_Callback, 32);//20260929此处不需要直接调用来初始化，已被封装进入DR16、VT13、FS_IA6B等外设的初始化中
     //SPI初始化
     SPI_Init(&hspi2, BMI088_SPI2_Callback);
 
