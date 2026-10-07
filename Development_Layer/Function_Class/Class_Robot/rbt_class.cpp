@@ -353,7 +353,7 @@ void CLASS_ROBOT::RTOS_100ms_Calculate_Callback()
     //HACK:初始化和该函数的调用逻辑链条不清晰
 
 
-    Debug.Plot(3,BMI088.Get_Temp(),BMI088.IMU_PID_Heater.Get_Out(),BMI088.IMU_PID_Heater.Get_Integral_Error());
+    Debug.Plot(6,BMI088.Get_Temp(),BMI088.IMU_PID_Heater.Get_Out(),BMI088.IMU_PID_Heater.Get_Integral_Error(),BMI088.Get_Pitch(),BMI088.Get_Roll(),BMI088.Get_Yaw());
 //调试用
 }
 /**
@@ -1169,13 +1169,13 @@ float f2_in_angle;
 void CLASS_ROBOT ::FSi6x_control_polar()//极坐标系
 {
 
-    if (FS_I6X.Get_Status() == FS_IA6B_Status_ENABLE)
-    {
+    // if (FS_I6X.Get_Status() == FS_IA6B_Status_ENABLE)
+    // {
         if (FS_I6X.Get_Ibus_msg(5) >= 1751  )
         {
 
             theta_polar = Math_Int_To_Float(FS_I6X.Get_Ibus_msg(3),1000,2000,3.925f,5.495f);
-            R = Math_Int_To_Float(FS_I6X.Get_Ibus_msg(2),1000,2000,0.125f,0.450f);
+            R = Math_Int_To_Float(FS_I6X.Get_Ibus_msg(2),1000,2000,0.125f,0.330f);
             //theta_polar = 4.4f;
         }
         // else if (fsia6b_msg.ch[4] >= 1751  )
@@ -1297,6 +1297,6 @@ void CLASS_ROBOT ::FSi6x_control_polar()//极坐标系
         Foot1_Left.Foot_control();
         Foot2_Right.Foot_control();//HACK：最好不要放进该if，否则每次遥控器抖动/掉线，腿部电机都会经历一次"失去心跳 → 超时失能 → 重新使能"，机器人会瞬间瘫软。掉线时正确的做法是下发安全指令（保持位姿 / 阻尼 / 缓慢失能），而不是干脆不发。
 //FIXME：目前有轮毂电机在未接收到遥控下发的控制命令时偶发自动开始转动？
-        }
+        // }
 }
 

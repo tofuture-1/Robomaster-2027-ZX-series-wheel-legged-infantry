@@ -22,7 +22,7 @@ void Class_SingleDogFoot_DM::SingleFoot_Init(FDCAN_HandleTypeDef *m_back_hfdcan,
 	M_back.Init(M_back_hfdcan, M_back_CAN_Rx_ID, M_back_CAN_Tx_ID);
 	M_front.Init(M_front_hfdcan, M_front_CAN_Rx_ID, M_front_CAN_Tx_ID);
 
-
+//HACK：需要重构，目前上电就回0位是不好的做法（直接改用VMC）
 
 	M_back.Set_K_P(kp);
 	M_back.Set_K_D(kd);

@@ -123,6 +123,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         ${SOURCES_USERS}
         Development_Layer/Robot_Control/Chassis/chassis.cpp
         Development_Layer/Robot_Control/Chassis/chassis.h
+        Development_Layer/Robot_Control/Controller/VMC.cpp
+        Development_Layer/Robot_Control/Controller/VMC.h
 )
 
 # 强制输出 ELF 后缀，避免链接阶段误生成 Windows .exe 目标。
