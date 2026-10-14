@@ -63,10 +63,11 @@ int8_t  Class_SingleDogFoot_DM::FootXY_map_MotorAngle()//直角坐标系下的�
 	motor_angle_raw_front = acos(a) + atan2(Y,X);
 	motor_angle_raw_back = -acos(a) + atan2(Y,X);
 	//计算角度原数据,均以水平x轴正向为基准,后面要考虑越轴-只有外侧电机要考虑？
+//以上为运动学逆解
 
 
-
-	motor_angle_DM_front =  -(motor_angle_raw_front + 0.16802f);//目前串联腿构型的,0.16802f为水平轴到0点的偏移补偿
+//HACK：这种命名方式不便于解读
+	motor_angle_DM_front =  -(motor_angle_raw_front + 0.16802f);//目前串联腿构型的,0.16802f为水平轴到当前电机0点的偏移补偿
 	motor_angle_DM_back = (-Pi - motor_angle_raw_back) - 0.16802f;
 
 

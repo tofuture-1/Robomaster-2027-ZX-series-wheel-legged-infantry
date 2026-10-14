@@ -1165,6 +1165,8 @@ float f1_out_angle;
 float f1_in_angle;
 float f2_out_angle;
 float f2_in_angle;
+
+float theta_polar_fine;
 // HACK：全局变量乱飞不是一种好的方案，以及目前极坐标系函数中塞了太多东西
 void CLASS_ROBOT ::FSi6x_control_polar()//极坐标系
 {
@@ -1177,6 +1179,7 @@ void CLASS_ROBOT ::FSi6x_control_polar()//极坐标系
             theta_polar = Math_Int_To_Float(FS_I6X.Get_Ibus_msg(3),1000,2000,3.925f,5.495f);
             R = Math_Int_To_Float(FS_I6X.Get_Ibus_msg(2),1000,2000,0.125f,0.330f);
             //theta_polar = 4.4f;
+            theta_polar_fine = theta_polar;
         }
         // else if (fsia6b_msg.ch[4] >= 1751  )
         // {
@@ -1236,7 +1239,7 @@ void CLASS_ROBOT ::FSi6x_control_polar()//极坐标系
 
 
         // }
-//XXX:注意，目前在开启ch7（swd）平衡的时候上拨ch4（swb）（即关闭当前这个函数）时，腿部会突然大角度往上收（同时触发通信超时导致的失能），并最终超出限位；另外，轮毂电机仍然会保持最后的旋转（但似乎不开启ch7时手动控制的速度会在8009p失能同时归0）
+//2026100x:注意，目前在开启ch7（swd）平衡的时候上拨ch5（swb）（即关闭当前这个函数）时，腿部会突然大角度往上收（同时触发通信超时导致的失能），并最终超出限位；另外，轮毂电机仍然会保持最后的旋转（但似乎不开启ch7时手动控制的速度会在8009p失能同时归0）
         //HACK：目前的实现还是不太可行
         if (FS_I6X.Get_Ibus_msg(7) >= 1751  )//XXX：目前腿部的二次补偿打开之后似乎会受轮组的目标速度值影响？？？
         {
@@ -1266,7 +1269,14 @@ void CLASS_ROBOT ::FSi6x_control_polar()//极坐标系
 
             Chassis.Set_Chassis_Omega(balance_out,-balance_out);
             // theta_polar = theta_polar - Pi*(BMI088.Get_Pitch()-Target_angle - 2.65f*((Omega_Right-Omega_Right_Now)+(Omega_Left+Omega_Left_Now) )/2 )/360.0f;
-            theta_polar = theta_polar - Pi*(BMI088.Get_Pitch()-Target_angle)/180.0f;//向后倒时Get_Pitch的值减小
+            if (FS_I6X.Get_Ibus_msg(5) >= 1751)//双开关，两个都打开时才启动
+            {
+                theta_polar_fine = theta_polar - Pi*(BMI088.Get_Pitch()-Target_angle)/180.0f;//向后倒时Get_Pitch的值减小
+                //DONE：202610142030疑似问题关键，即不要直接对原值进行修改,避免之前获取通道被关闭后导致该值一直在被循环
+            }else
+            {
+                theta_polar_fine = theta_polar;
+            }
         }else
         {
             Chassis.Set_Chassis_Omega(-Omega_Left,Omega_Right);
@@ -1277,8 +1287,8 @@ void CLASS_ROBOT ::FSi6x_control_polar()//极坐标系
 
         /** @brief 极坐标→直角坐标转换：由极径R和极角theta_polar计算机身参考位姿(X,Y) */
         //极坐标转换成直角坐标
-        X = cos(theta_polar) * R;
-        Y = sin(theta_polar) * R;
+        X = cos(theta_polar_fine) * R;
+        Y = sin(theta_polar_fine) * R;
 
         Xe1 = X;
         Ye1 = Y;
@@ -1299,4 +1309,3 @@ void CLASS_ROBOT ::FSi6x_control_polar()//极坐标系
 //FIXME：目前有轮毂电机在未接收到遥控下发的控制命令时偶发自动开始转动？
         // }
 }
-

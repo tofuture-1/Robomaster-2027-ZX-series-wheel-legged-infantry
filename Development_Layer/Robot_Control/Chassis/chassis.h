@@ -7,6 +7,7 @@
 
 #include "fsm_class.h"
 #include "motor_dji.h"
+#include "motor_dm.h"
 #include "filter.h"
 
 /**
@@ -56,16 +57,21 @@ inline float Class_Chassis_Motor_DJI_C620::Get_Now_Filter_Omega()
 
 
 /**
- * @brief Specialized, 底盘类-测试
+ * @brief Specialized, 底盘类-用于轮腿步兵测试
  *
  */
 class Class_Chassis
 {
 public:
 
+    Class_Motor_DM_Normal M8009p_1;//零点为x负轴，逆时针为正//注意是看主动大腿杆的位置
+    Class_Motor_DM_Normal M8009p_2;//零点为x正轴，逆时针为正
+
+
     Class_Chassis_Motor_DJI_C620 Motor_Chassis_Left;
 
     Class_Chassis_Motor_DJI_C620 Motor_Chassis_Right;
+
 
 
     void Init();
