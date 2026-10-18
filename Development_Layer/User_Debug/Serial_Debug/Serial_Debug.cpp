@@ -95,7 +95,7 @@ void Class_Serial_Debug::Printf(const char *format, ...) {
     va_end(args);
 }
 
-void Class_Serial_Debug::Plot(int num, ...) {
+void Class_Serial_Debug::Plot(int num, ...) {//使用VOFA JustFlow协议可以解析
     if (num > 20) num = 20;
     
     // 使用当前缓冲索引

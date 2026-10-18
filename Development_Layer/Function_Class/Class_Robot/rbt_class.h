@@ -24,6 +24,7 @@
 #include "foot_control.h"
 #include "fs_ia6b.h"
 #include "../../Robot_Control/Chassis/chassis.h"
+#include "VMC.h"
 
 extern volatile bool robot_1ms_cycle_flag;
 extern volatile bool robot_100ms_cycle_flag;
@@ -198,6 +199,10 @@ public:
 
     Class_PID Chassis_Banlance_TargetAngle;//目标角度PID
     //
+
+    Class_VMC Foot_right;
+    Class_VMC Foot_left;
+    //VMC测试
 
     // 静态实例指针，用于回调函数访问
     static CLASS_ROBOT *Instance;

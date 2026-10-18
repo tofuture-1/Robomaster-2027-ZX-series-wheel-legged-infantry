@@ -179,7 +179,7 @@ public:
             Enum_Motor_DM_Control_Method __Motor_DM_Control_Method =
                 Motor_DM_Control_Method_NORMAL_MIT,
             float __Angle_Max = 12.5f, float __Omega_Max = 45.0f,
-            float __Torque_Max = 54.0f, float __Current_Max = 10.261194f);
+            float __Torque_Max = 54.0f, float __Current_Max = 10.261194f);//TODO:这些默认参数是否跟8009P的上位机配置一致？
 
   inline float Get_Angle_Max();
 
@@ -242,6 +242,7 @@ public:
   virtual void RTOS_100ms_Alive_Callback();
 
   void RTOS_Send_Callback();
+  void RTOS_Send_Callback_debug();
 
 protected:
   // 初始化相关变量

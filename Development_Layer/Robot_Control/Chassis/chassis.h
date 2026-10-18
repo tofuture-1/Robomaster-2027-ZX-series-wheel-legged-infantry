@@ -24,6 +24,10 @@ public:
 
     virtual void RTOS_Calculate_Callback();
 
+    void Set_Hub_Torque(float Torque){Hub_Torque = Torque;};
+    float Get_Now_Hub_Torque(){return Get_Now_Current() * 0.24628236875f; };
+    //HACK:实际似乎会因为反电动势导致读取到的电流为0？无负载时确实没有力矩输出？
+
 
 protected:
     // 初始化相关常量
@@ -31,6 +35,11 @@ protected:
     // 常量
 
     // 内部变量
+    float Hub_Torque = 0.0f;//轮毂电机的输出力矩
+    const float torque_constant_reciprocal = 4.06037998f;//单位：安培/牛米
+    //此为取倒数（节约浮点数除法运算算力消耗？），原值为：0.3牛米/安培(搭配原有减速比3591/187减速箱时的数据）
+    //（0.3/（3591/187））*268/17 = 0.24628236875f牛米/安培(目前268/17减速箱下的转矩常数)
+    //const float reduction_ratio_reciprocal = 0.0634328f;//此为取倒数，原值为268/17;
 
     // 读变量
 
@@ -40,7 +49,7 @@ protected:
 
     // 内部函数
 
-    virtual  void PID_Calculate();
+    virtual  void PID_Calculate();//加入对力矩的控制
 
 };
 
@@ -64,9 +73,10 @@ class Class_Chassis
 {
 public:
 
-    Class_Motor_DM_Normal M8009p_1;//零点为x负轴，逆时针为正//注意是看主动大腿杆的位置
-    Class_Motor_DM_Normal M8009p_2;//零点为x正轴，逆时针为正
-
+    Class_Motor_DM_Normal M8009p_1;//对应杆零点为x负轴，逆时针为正//注意是看主动大腿杆的位置,正轴的方向定为前进（电池架）方向
+    Class_Motor_DM_Normal M8009p_2;//对应杆零点为x正轴，逆时针为正
+    Class_Motor_DM_Normal M8009p_3;//对应杆零点为x负轴，逆时针为正//注意是看主动大腿杆的位置
+    Class_Motor_DM_Normal M8009p_4;//对应杆零点为x正轴，逆时针为正
 
     Class_Chassis_Motor_DJI_C620 Motor_Chassis_Left;
 
@@ -81,8 +91,9 @@ public:
 
 
     inline void Set_Chassis_Omega(float __Chassis_Omega_Left,float __Chassis_Omega_Right);
-    inline void Set_Banclce_Kp(float __Kp);
-    inline void Set_Banclce_Kd(float __Kd);
+
+    inline void Set_Banclance_Kp(float __Kp);
+    inline void Set_Banclance_Kd(float __Kd);
 
 
     void RTOS_100ms_Alive_Callback();
@@ -142,8 +153,8 @@ inline void Class_Chassis::Set_Chassis_Omega(float __Chassis_Omega_Left,float __
     Chassis_Omega_Right = __Chassis_Omega_Right;
 }
 
-inline void Class_Chassis::Set_Banclce_Kp(float __Kp){Banlance_Kp = __Kp;}
-inline void Class_Chassis::Set_Banclce_Kd(float __Kd){Banlance_Kd = __Kd;}
+inline void Class_Chassis::Set_Banclance_Kp(float __Kp){Banlance_Kp = __Kp;}
+inline void Class_Chassis::Set_Banclance_Kd(float __Kd){Banlance_Kd = __Kd;}
 
 
 #endif //H7_BOARD_CHASSIS_H

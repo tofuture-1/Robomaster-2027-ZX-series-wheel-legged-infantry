@@ -44,7 +44,7 @@ enum Enum_Motor_DJI_Control_Method {
   Motor_DJI_Control_Method_TORQUE,
   Motor_DJI_Control_Method_OMEGA,
   Motor_DJI_Control_Method_ANGLE,
-};
+};//主要在PID中进行switch
 
 /**
  * @brief 大疆电机驱动版本, 影响GM6020电机驱动方式

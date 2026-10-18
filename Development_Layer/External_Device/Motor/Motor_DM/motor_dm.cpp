@@ -341,7 +341,7 @@ void Class_Motor_DM_Normal::RTOS_100ms_Alive_Callback()
  */
 void Class_Motor_DM_Normal::RTOS_Send_Callback()
 {
-    if (Rx_Data.Control_Status == Motor_DM_Status_ENABLE)
+    if (Rx_Data.Control_Status == Motor_DM_Control_Status_ENABLE)
     {
         // 电机在线, 正常控制
         Math_Constrain(&Control_Angle, -Angle_Max, Angle_Max);
@@ -353,7 +353,7 @@ void Class_Motor_DM_Normal::RTOS_Send_Callback()
 
         Output();
     }
-    else if (Rx_Data.Control_Status == Motor_DM_Status_DISABLE)
+    else if (Rx_Data.Control_Status == Motor_DM_Control_Status_DISABLE)
     {
         // 电机可能掉线, 使能电机
         CAN_Send_Enter();
@@ -363,6 +363,39 @@ void Class_Motor_DM_Normal::RTOS_Send_Callback()
         // 电机错误, 发送清除错误帧
         CAN_Send_Clear_Error();
     }
+}
+
+/**
+ * @brief TIM定时器中断发送出去的回调函数, 计算周期取决于自主设置的控制周期
+ *
+ */
+void Class_Motor_DM_Normal::RTOS_Send_Callback_debug()
+{
+    if (Rx_Data.Control_Status == Motor_DM_Control_Status_ENABLE)
+    {
+        // 电机在线, 正常控制
+        Math_Constrain(&Control_Angle, -Angle_Max, Angle_Max);
+        Math_Constrain(&Control_Omega, -Omega_Max, Omega_Max);
+        Math_Constrain(&Control_Torque, -Torque_Max, Torque_Max);
+        Math_Constrain(&Control_Current, -Current_Max, Current_Max);
+        Math_Constrain(&K_P, 0.0f, 500.0f);
+        Math_Constrain(&K_D, 0.0f, 5.0f);
+
+        CAN_Send_Enter();
+        //Output();//HACK：debug专用的
+    }
+    else if (Rx_Data.Control_Status == Motor_DM_Control_Status_DISABLE)//FIXME：两种不同枚举类型比较导致始终不对?但是之前的又可以用，之前的也不可用。自己在RC写的可用
+    {
+        // 电机可能掉线, 使能电机
+        CAN_Send_Enter();
+    }
+    else
+    {
+        // 电机错误, 发送清除错误帧
+        CAN_Send_Clear_Error();
+    }
+    // CAN_Send_Clear_Error();
+    // CAN_Send_Enter();
 }
 
 /**
@@ -387,7 +420,7 @@ void Class_Motor_DM_Normal::Data_Process()
     tmp_omega = (tmp_buffer->Omega_11_4 << 4) | (tmp_buffer->Omega_3_0_Torque_11_8 >> 4);
     tmp_torque = ((tmp_buffer->Omega_3_0_Torque_11_8 & 0x0f) << 8) | (tmp_buffer->Torque_7_0);
 
-    Rx_Data.Control_Status = static_cast<Enum_Motor_DM_Control_Status_Normal>(tmp_buffer->Control_Status_Enum);
+    Rx_Data.Control_Status = static_cast<Enum_Motor_DM_Control_Status_Normal>(tmp_buffer->Control_Status_Enum);//TODO：理解此处用法
 		
 		if (Rx_Data.First_Frame) 
     {
@@ -408,10 +441,10 @@ void Class_Motor_DM_Normal::Data_Process()
         // 反方向转过了一圈
         Rx_Data.Total_Round--;
     }
-    Rx_Data.Total_Encoder = (Rx_Data.Total_Round << 16) + tmp_encoder; 
+    Rx_Data.Total_Encoder = (Rx_Data.Total_Round << 16) + tmp_encoder; //TODO：理解这段解析
 
     // 计算电机本身信息
-    Rx_Data.Now_Angle = ((float)(Rx_Data.Total_Encoder) / (float)(1 << 16))* 2.0f * Angle_Max;
+    Rx_Data.Now_Angle = -Angle_Max + ((float)(Rx_Data.Total_Encoder) / (float)(1 << 16))* 2.0f * Angle_Max;//DONE：202610152103修复了解析后的值与实际值偏差P_MAX的问题
     Rx_Data.Now_Omega = Math_Int_To_Float(tmp_omega, 0x7ff, (1 << 12) - 1, 0, Omega_Max);
     Rx_Data.Now_Torque = Math_Int_To_Float(tmp_torque, 0x7ff, (1 << 12) - 1, 0, Torque_Max);
     Rx_Data.Now_MOS_Temperature = tmp_buffer->MOS_Temperature + CELSIUS_TO_KELVIN;

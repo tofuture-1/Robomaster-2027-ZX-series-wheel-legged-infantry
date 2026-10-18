@@ -11,7 +11,7 @@
  *
  * @param hcan CAN编号
  * @param __CAN_ID CAN ID
- * @param __DJI_Motor_Driver_Version 大疆电机驱动版本, 当且仅当当前被分配电机为6020, 而且是电流驱动新版本时传2023, 否则都是default
+ * @param __DJI_Motor_Driver_Version 大疆电机驱动版本, 当且仅当当前被分配电机为6020, 而且是电流驱动新版本时传2023, 否则都是default//TODO：这部分注释是否有效？
  * @return uint8_t* 缓存区指针
  */
 uint8_t *allocate_tx_data(FDCAN_HandleTypeDef *hcan, Enum_Motor_DJI_ID __CAN_ID, Enum_Motor_DJI_GM6020_Driver_Version __DJI_Motor_Driver_Version = Motor_DJI_GM6020_Driver_Version_DEFAULT)
@@ -1221,7 +1221,7 @@ void Class_Motor_DJI_C620::Power_Limit_Control()
 void Class_Motor_DJI_C620::Output()
 {
     Tx_Data[0] = (int16_t) Out >> 8;
-    Tx_Data[1] = (int16_t) Out;
+    Tx_Data[1] = (int16_t) Out;//最后数据是怎么发送通过RTOS_1ms_FDCAN_Motor_Callback();在rbt_class的RTOS_1ms_Conmunicate_Callback()中
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

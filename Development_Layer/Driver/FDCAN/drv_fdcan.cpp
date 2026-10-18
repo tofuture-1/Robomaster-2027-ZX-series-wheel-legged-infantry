@@ -263,7 +263,7 @@ FDCAN_Get_Status(FDCAN_HandleTypeDef *hfdcan) {
 /**
  * @brief FDCAN 电机控制 1ms 周期任务回调，用于下发周期性控制报文。
  */
-void RTOS_1ms_FDCAN_Motor_Callback() {
+void RTOS_1ms_FDCAN_Motor_Callback() {//TODO:这部分是什么？
   // DJI 电机控制报文
 
   // 底盘电机控制报文，ID 对应 0x201~0x204。

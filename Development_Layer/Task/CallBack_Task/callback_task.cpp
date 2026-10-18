@@ -21,28 +21,32 @@ uint32_t flag = 0;
  *
  * @param FDCAN_RxMessage CAN1收到的消息
  */
-void Device_FDCAN1_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage) {
+void Device_FDCAN1_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage) {//HACK：注意回传信息的路由分配
 	
 	switch (FDCAN_RxMessage->Header.Identifier)
 	{
 	case(0x12):
 		{
-			robot.Foot1_Left.M_back.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
+			//robot.Foot1_Left.M_back.CAN_RxCpltCallback(FDCAN_RxMessage->Data);//HACK：临时测试使用
+			robot.Chassis.M8009p_2.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
 			break;
 		}
 	case(0x11):
 		{
-			robot.Foot1_Left.M_front.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
+			//robot.Foot1_Left.M_front.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
+			robot.Chassis.M8009p_1.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
 			break;
 		}
 	case(0x14):
 		{
-			robot.Foot2_Right.M_back.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
+			//robot.Foot2_Right.M_back.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
+			robot.Chassis.M8009p_4.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
 			break;
 		}
 	case(0x13):
 		{
-			robot.Foot2_Right.M_front.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
+			//robot.Foot2_Right.M_front.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
+			robot.Chassis.M8009p_3.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
 			break;
 		}
 	default:
