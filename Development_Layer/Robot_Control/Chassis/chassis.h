@@ -9,6 +9,19 @@
 #include "motor_dji.h"
 #include "motor_dm.h"
 #include "filter.h"
+#include "LQR.h"
+#include "VMC.h"
+#include "fs_ia6b.h"
+
+
+enum Enum_FSM_Chassis
+{
+    Chassis_STATE_SELF_RESCUE = 0,
+    Chassis_STATE_NORMAL_LQR_BALANCE,
+    Chassis_STATE_JUMPING,
+    Chassis_STATE_OFF_GROUND,
+
+};
 
 /**
  * @brief Specialized, 轮毂电机, 加了滤波器
@@ -23,8 +36,10 @@ public:
     inline float Get_Now_Filter_Omega();
 
     virtual void RTOS_Calculate_Callback();
+    void RTOS_Calculate_Callback_debug();
 
-    void Set_Hub_Torque(float Torque){Hub_Torque = Torque;};
+    void Set_Hub_Torque(float Torque){Hub_Torque = Torque + Hub_Torque_fine;};
+    void Set_Hub_Torque_fine(float Torque){Hub_Torque_fine = Torque;};
     float Get_Now_Hub_Torque(){return Get_Now_Current() * 0.24628236875f; };
     //HACK:实际似乎会因为反电动势导致读取到的电流为0？无负载时确实没有力矩输出？
 
@@ -36,6 +51,7 @@ protected:
 
     // 内部变量
     float Hub_Torque = 0.0f;//轮毂电机的输出力矩
+    float Hub_Torque_fine = 0.0f;//用于差速的补偿值TODO：也可用于保证不乱转向?
     const float torque_constant_reciprocal = 4.06037998f;//单位：安培/牛米
     //此为取倒数（节约浮点数除法运算算力消耗？），原值为：0.3牛米/安培(搭配原有减速比3591/187减速箱时的数据）
     //（0.3/（3591/187））*268/17 = 0.24628236875f牛米/安培(目前268/17减速箱下的转矩常数)
@@ -64,6 +80,17 @@ inline float Class_Chassis_Motor_DJI_C620::Get_Now_Filter_Omega()
 }
 
 
+class Class_FSM_Chassis : public Class_FSM
+{
+
+    public:
+
+    Enum_FSM_Chassis Chassis_State;
+
+    void RTOS_Calculate_Callback();//重写状态转换逻辑
+
+
+};
 
 /**
  * @brief Specialized, 底盘类-用于轮腿步兵测试
@@ -80,8 +107,21 @@ public:
 
     Class_Chassis_Motor_DJI_C620 Motor_Chassis_Left;
 
-    Class_Chassis_Motor_DJI_C620 Motor_Chassis_Right;
+    Class_Chassis_Motor_DJI_C620 Motor_Chassis_Right;//HACK：3508默认正方向为电机输出轴的逆时针方向
 
+    //状态机
+    Class_FSM_Chassis Chassis_FSM;
+
+
+    //控制相关
+    Class_LQR Foot_LQR;//单LQR实例，假设双腿对称
+    //Class_LQR Foot_LQR_Right;
+
+    Class_VMC Foot_right;
+    Class_VMC Foot_left;
+    //VMC测试
+
+    Class_FS_IA6B FS_I6X;//HACK:过渡写法,之后再剥离解耦到Robot层
 
 
     void Init();
@@ -140,6 +180,7 @@ protected:
 
 
     // 内部函数
+    void Normal_LQR_Balance_Control();
 
     void Output();
 };

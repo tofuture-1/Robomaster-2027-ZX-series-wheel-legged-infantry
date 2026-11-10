@@ -258,7 +258,7 @@ void CLASS_ROBOT::Init() {
     //Chassis_Banlance.Init(5.0f, 0.0f, 0.1f, 0.0f, 0.0f , 15.0f, 10.0f,0.001);//HACK:需要封装好
     //Chassis_Banlance_TargetAngle.Init(1.0f, 0.1f, 0.01f, 0.0f, 0.0f , 15.0f, 10.0f,0.001);//HACK:需要封装好
 
-    FS_I6X.Init(&huart7);
+    Chassis.FS_I6X.Init(&huart7);
     //
   // FSM_VT03_Left_Mouse_Press_Hold.Robot = this;
   // FSM_VT03_Left_Mouse_Press_Hold.Init(4, FSM_Press_Hold_Status_STOP);
@@ -321,7 +321,10 @@ void CLASS_ROBOT::Init() {
  */
 void CLASS_ROBOT::RTOS_1000ms_Alive_PeriodElapsedCallback() {}
 
+void CLASS_ROBOT::RTOS_1000ms_Calculate_Callback()
+{
 
+}
 /**
  * @brief systick��ʱ���ж϶��ڼ��ģ���Ƿ���
  *
@@ -329,7 +332,10 @@ void CLASS_ROBOT::RTOS_1000ms_Alive_PeriodElapsedCallback() {}
 void CLASS_ROBOT::RTOS_100ms_Alive_PeriodElapsedCallback() {
 
     Chassis.RTOS_100ms_Alive_Callback();
-    FS_I6X.RTOS_100ms_Alive_Callback();
+    Chassis.FS_I6X.RTOS_100ms_Alive_Callback();//HACK:是否需要剥离?
+
+
+
 
   // VT03.RTOS_100ms_Alive_Callback();
   // The_Chassis.RTOS_100ms_Alive_Callback();
@@ -344,34 +350,55 @@ void CLASS_ROBOT::RTOS_100ms_Alive_PeriodElapsedCallback() {
 void CLASS_ROBOT::RTOS_100ms_Conmunicate_Callback()
 {
 
+
 }
 
 void CLASS_ROBOT::RTOS_100ms_Calculate_Callback()
 {
 
-    BMI088.IMU_Heater_Control(55.0f);
-    //HACK:初始化和该函数的调用逻辑链条不清晰
+
 
     // Debug.Plot(9,Foot_right.Get_theta1(),Foot_right.Get_theta2(),Foot_right.Get_phi(),
     //     Foot_right.Get_x_d(),Foot_right.Get_y_d(),Foot_right.Get_F_L(),Foot_right.Get_L(),Foot_right.Get_Motor_tau1(),Foot_right.Get_Motor_tau2());
     // Debug.Plot(9,Foot_left.Get_theta1(),Foot_left.Get_theta2(),Foot_left.Get_phi(),
     //     Foot_left.Get_x_d(),Foot_left.Get_y_d(),Foot_left.Get_F_L(),Foot_left.Get_L(),Foot_left.Get_Motor_tau1(),Foot_left.Get_Motor_tau2());
 
-    //关节电机相关数据
-    // if (FS_I6X.Get_Ibus_msg(7) > 1751)
-    // {
-    //     Debug.Plot(12,Foot_left.Get_theta1(),Foot_left.Get_theta2(),Foot_left.Get_phi(),
-    //         Foot_left.Get_x_d(),Foot_left.Get_y_d(),Foot_left.Get_F_L(),Foot_left.Get_L(),
-    //         - Foot_left.Get_Motor_tau1(), - Foot_left.Get_Motor_tau2(),Foot_left.Get_L_des(),
-    //         Foot_left.Get_L_dot(),Foot_left.Get_leg_swing_torque());
-    //     //HACK：注意方向（取负值），此前解算直接适用于右腿，但左腿的电机方向会有区别
-    // }else
-    // {
-    //     Debug.Plot(12,Foot_right.Get_theta1(),Foot_right.Get_theta2(),Foot_right.Get_phi(),
-    //         Foot_right.Get_x_d(),Foot_right.Get_y_d(),Foot_right.Get_F_L(),Foot_right.Get_L(),
-    //         Foot_right.Get_Motor_tau1(),Foot_right.Get_Motor_tau2(),Foot_right.Get_L_des(),
-    //         Foot_right.Get_L_dot(),Foot_right.Get_leg_swing_torque());
-    // }
+    //腿部电机相关数据
+    if (Chassis.FS_I6X.Get_Ibus_msg(7) > 1751)
+    {
+        // Debug.Plot(19,Foot_left.Get_theta1(),Foot_left.Get_theta2(),Foot_left.Get_phi(),
+        //     Foot_left.Get_x_d(),Foot_left.Get_y_d(),Foot_left.Get_F_L(),Foot_left.Get_L(),
+        //     - Foot_left.Get_Motor_tau1(), - Foot_left.Get_Motor_tau2(),Foot_left.Get_L_des(),
+        //     Foot_left.Get_L_dot(),Foot_left.Get_leg_swing_torque(),
+        //     Chassis.Motor_Chassis_Left.Get_Now_Omega(),Chassis.Motor_Chassis_Left.Get_Now_Hub_Torque(),
+        //     Chassis.Motor_Chassis_Left.Get_Now_Current(),Foot_LQR.Get_tau_w(),
+        //     BMI088.Get_Pitch(),BMI088.Get_Temp(),safe_flag);
+        //HACK：注意方向（取负值），此前解算直接适用于右腿，但左腿的电机方向会有区别
+        Debug.Plot(17,Chassis.Foot_left.Get_theta1(),Chassis.Foot_left.Get_theta2(),Chassis.Foot_left.Get_phi(),
+            Chassis.Foot_left.Get_F_L(),Chassis.Foot_left.Get_L(),
+            - Chassis.Foot_left.Get_Motor_tau1(), - Chassis.Foot_left.Get_Motor_tau2(),Chassis.Foot_left.Get_L_des(),
+            Chassis.Foot_left.Get_leg_swing_torque(),
+            Chassis.Motor_Chassis_Left.Get_Now_Omega(),Chassis.Motor_Chassis_Left.Get_Now_Hub_Torque(),
+            Chassis.Foot_LQR.Get_tau_w(),
+            BMI088.Get_Pitch(),BMI088.Get_Temp(),(float)safe_flag,Chassis.Foot_left.Get_delta_leg_rl_phi_dot(),Chassis.Foot_left.Get_leg_swing_torque_delta_fine());
+    }else
+    {
+        // Debug.Plot(19,Foot_right.Get_theta1(),Foot_right.Get_theta2(),Foot_right.Get_phi(),
+        //     Foot_right.Get_x_d(),Foot_right.Get_y_d(),Foot_right.Get_F_L(),Foot_right.Get_L(),
+        //     Foot_right.Get_Motor_tau1(),Foot_right.Get_Motor_tau2(),Foot_right.Get_L_des(),
+        //     Foot_right.Get_L_dot(),Foot_right.Get_leg_swing_torque(),
+        //     Chassis.Motor_Chassis_Right.Get_Now_Omega(),Chassis.Motor_Chassis_Right.Get_Now_Hub_Torque(),
+        //     Chassis.Motor_Chassis_Right.Get_Now_Current(),Foot_LQR.Get_tau_w(),
+        //     BMI088.Get_Pitch(),BMI088.Get_Temp(),safe_flag);
+        Debug.Plot(17,Chassis.Foot_right.Get_theta1(),Chassis.Foot_right.Get_theta2(),Chassis.Foot_right.Get_phi(),
+            Chassis.Foot_right.Get_F_L(),Chassis.Foot_right.Get_L(),
+            Chassis.Foot_right.Get_Motor_tau1(),Chassis.Foot_right.Get_Motor_tau2(),Chassis.Foot_right.Get_L_des(),
+            Chassis.Foot_right.Get_leg_swing_torque(),
+            Chassis.Motor_Chassis_Right.Get_Now_Omega(),Chassis.Motor_Chassis_Right.Get_Now_Hub_Torque(),
+            Chassis.Foot_LQR.Get_tau_w(),
+            BMI088.Get_Pitch(),BMI088.Get_Temp(),(float)safe_flag,Chassis.Foot_right.Get_delta_leg_rl_phi_dot(),Chassis.Foot_right.Get_leg_swing_torque_delta_fine());//HACK:不能发送int类型,必须写成 (float)safe_flag。
+
+    }//HACK:对控制周期的影响？
 
     // Debug.Plot(8,Chassis.Motor_Chassis_Left.Get_Now_Hub_Torque(),Chassis.Motor_Chassis_Right.Get_Now_Hub_Torque(),
     //     Chassis.Motor_Chassis_Left.Get_Now_Omega(),Chassis.Motor_Chassis_Right.Get_Now_Omega(),
@@ -380,9 +407,10 @@ void CLASS_ROBOT::RTOS_100ms_Calculate_Callback()
 
 
     //IMU相关数据
-    Debug.Plot(6,BMI088.Get_Temp(),BMI088.IMU_PID_Heater.Get_Out(),BMI088.IMU_PID_Heater.Get_Integral_Error(),
-        BMI088.Get_Pitch(),BMI088.Get_Roll(),BMI088.Get_Yaw());
-
+    // Debug.Plot(9,BMI088.Get_Temp(),BMI088.IMU_PID_Heater.Get_Out(),BMI088.IMU_PID_Heater.Get_Integral_Error(),
+    //     BMI088.Get_Pitch(),BMI088.Get_Roll(),BMI088.Get_Yaw(),
+    //     BMI088.Get_Gyro_X(),BMI088.Get_Gyro_Y(),BMI088.Get_Gyro_Z() );//TODO:优化IMU的回传数据效果
+    //Get_Gyro_X单位是弧度，需要换算180.0f/3.1415926535f=57.2957795147f
 //调试用
 }
 /**
@@ -391,8 +419,13 @@ void CLASS_ROBOT::RTOS_100ms_Calculate_Callback()
  */
 void CLASS_ROBOT::RTOS_1ms_Calculate_Callback() {
 
+
+//TODO：需要详细对比有无温控情况下的IMU数据
+    //BMI088.IMU_Heater_Control(50.0f);
+    //HACK:初始化和该函数的调用逻辑链条不清晰，调用前记得初始化
+
     Chassis_Control();
-    Chassis.RTOS_1ms_Calculate_Callback();
+
 
 
   //
@@ -552,13 +585,12 @@ void CLASS_ROBOT::RTOS_1ms_Conmunicate_Callback() {
  */
 void CLASS_ROBOT::Chassis_Control() {
 
-    // Chassis.M8009p_1.RTOS_Send_Callback_debug();
-    // Chassis.M8009p_2.RTOS_Send_Callback_debug();//TODO：为什么直接调用类原版的Callback函数一样会触发通信丢失错误(超时）,Enable里的output被禁用的话就会导致单片机获得的电机状态是enable但实际已经丢失通信？
-    // //TODO::达妙电机的回传数据似乎在上位机中不失能也可以收到，但为何这里不行？
-    // Chassis.M8009p_3.RTOS_Send_Callback_debug();
-    // Chassis.M8009p_4.RTOS_Send_Callback_debug();
-    //DONE：2610161321：VMC的解算基本跑通
+//TODO:重构这部分代码,先剥离主体到状态机中,再剥离遥控器
 
+
+
+
+//VMC数据传入，TODO：部分与LQR共用的运动学解析数据应该解耦
     Foot_right.Set_theta1(Chassis.M8009p_1.Get_Now_Angle() - 0.16802f);//DONE：202610152130为什么上位机读数值为0.246时此函数Get到的值为12.7几-0.016802:此前的Data_Prgress中的角度解析有误
     Foot_right.Set_theta2(Chassis.M8009p_2.Get_Now_Angle() + 0.16802f);
 
@@ -570,23 +602,125 @@ void CLASS_ROBOT::Chassis_Control() {
     Foot_left.Set_theta1_dot( - (Chassis.M8009p_3.Get_Now_Omega()) );
     Foot_left.Set_theta2_dot( - (Chassis.M8009p_4.Get_Now_Omega()) );
 
+
+
+
+
     if (FS_I6X.Get_Ibus_msg(5) >= 1751)//下拨SWB拨杆启动腿长控制
     {
         //theta_polar = Math_Int_To_Float(FS_I6X.Get_Ibus_msg(3),1000,2000,3.925f,5.495f);
-        Foot_left.Set_L_des(Math_Int_To_Float(FS_I6X.Get_Ibus_msg(2),1000,2000,0.125f,0.330f));
-        Foot_right.Set_L_des(Math_Int_To_Float(FS_I6X.Get_Ibus_msg(2),1000,2000,0.125f,0.330f));
 
-        // //XXX:测试VMC时用
+        //暂时注释掉，先测试定腿长LQR
+        // Foot_left.Set_L_des(Math_Int_To_Float(FS_I6X.Get_Ibus_msg(2),1000,2000,0.125f,0.330f));
+        // Foot_right.Set_L_des(Math_Int_To_Float(FS_I6X.Get_Ibus_msg(2),1000,2000,0.125f,0.330f));
+
+
+
+        // //HACK:测试VMC时用
         // Foot_left.Set_leg_swing_torque( Math_Int_To_Float(FS_I6X.Get_Ibus_msg(3),1000,2000,-5.125f,5.125f) );
         // Foot_right.Set_leg_swing_torque( Math_Int_To_Float(FS_I6X.Get_Ibus_msg(3),1000,2000,-5.125f,5.125f) );
 
 
     }
     Foot_right.VMC_Calculate();
-    Foot_left.VMC_Calculate();
+    Foot_left.VMC_Calculate();//计算相关值，但未计算力矩
 
-    if (FS_I6X.Get_Ibus_msg(5) >= 1751)//下拨SWB拨杆启动腿长控制
+    //左右腿对称补偿
+    Foot_right.Set_delta_leg_rl_phi( -( Foot_left.Get_phi() - Foot_right.Get_phi() ) *0.5f);
+    Foot_right.Set_delta_leg_rl_phi_dot( -(Foot_left.Get_phi_dot() - Foot_right.Get_phi_dot() ) * 0.5f);
+    Foot_left.Set_delta_leg_rl_phi(  ( Foot_left.Get_phi() - Foot_right.Get_phi() ) *0.5f);
+    Foot_left.Set_delta_leg_rl_phi_dot(  (Foot_left.Get_phi_dot() - Foot_right.Get_phi_dot() ) * 0.5f);
+    //HACK：解决剪刀腿问题,此处的赋值、调用逻辑需要优化//该项因为phi_dot的噪声较多所以引用阻尼D项时会导致疯？
+
+    //HACK：临时debug用
+    if ( fabs(Foot_left.Get_phi()) >1.15f || fabs(Foot_right.Get_phi()) >1.15f )
     {
+        safe_flag = 1;
+    }//安全保护
+    //HACK：未完整获取电机数据之前会直接被赋值为1？
+    //fabs(Chassis.Motor_Chassis_Right.Get_Now_Omega()) > 40.0f || fabs(Chassis.Motor_Chassis_Left.Get_Now_Omega()) > 40.0f
+
+    if (FS_I6X.Get_Ibus_msg(6) >= 1751)
+    {
+        safe_flag = 0;
+    }
+    //复位按钮
+
+
+
+    //LQR数据传入
+    Foot_LQR.Set_theta(BMI088.Get_Pitch());//HACK：减去180.0f在该函数内部进行——关于归一化的逻辑设计
+    Foot_LQR.Set_theta_dot(BMI088.Get_Gyro_X());//Get_Gyro_X单位是弧度
+    Foot_LQR.Set_phi_dot( (Foot_left.Get_phi_dot() + Foot_right.Get_phi_dot() ) * 0.5f ) ;
+    Foot_LQR.Set_phi( ( Foot_left.Get_phi() + Foot_right.Get_phi() ) *0.5f );//对称处理，状态平均
+    Foot_LQR.Set_wheel_speed( 0.5f * ( Chassis.Motor_Chassis_Right.Get_Now_Omega() - Chassis.Motor_Chassis_Left.Get_Now_Omega() ) );
+    //HACK：3508默认正方向为电机输出轴的逆时针方向
+    //DONE：之前传入的速度方向错了导致一直在发散！！！！！
+
+    //HACK：注意滤波器的更新在下面的RTOS_Calculate_Callback中，会晚一个周期，TODO：是否做解耦？
+
+    //HACK：此处的速度方向分配方式可以优化,与下方的输出会联动？
+
+    // Foot_LQR_Right.Set_theta(BMI088.Get_Pitch());
+    // Foot_LQR_Right.Set_theta_dot(BMI088.Get_Gyro_X());//Get_Gyro_X单位是弧度
+    // Foot_LQR_Right.Set_phi_dot(Foot_right.Get_phi_dot());
+    // Foot_LQR_Right.Set_phi(Foot_right.Get_phi());
+    // Foot_LQR_Right.Set_wheel_speed(  Chassis.Motor_Chassis_Right.Get_Now_Omega() );//HACK：此处的速度方向分配方式可以优化,与下方的输出会联动？
+
+    Foot_LQR.LQR_Calculate();
+    //Foot_LQR_Right.LQR_Calculate();
+
+        if (FS_I6X.Get_Ibus_msg(4) >= 1751 && safe_flag == 0)//下拨SWA启动轮毂电机力矩控制
+        {
+            //HACK：对转向的控制实现可以优化一下，此外包括传参的参数常量化等
+            // Chassis.Motor_Chassis_Left.Set_Hub_Torque( - (Math_Int_To_Float(FS_I6X.Get_Ibus_msg(1),1000,2000,-10.0f,+10.0f) + Math_Int_To_Float(FS_I6X.Get_Ibus_msg(0),1000,2000,-10.0f,+10.0f)) );
+            // Chassis.Motor_Chassis_Right.Set_Hub_Torque( Math_Int_To_Float(FS_I6X.Get_Ibus_msg(1),1000,2000,-10.0f,+10.0f) - Math_Int_To_Float(FS_I6X.Get_Ibus_msg(0),1000,2000,-10.0f,+10.0f) );
+
+            Chassis.Motor_Chassis_Left.Set_Hub_Torque_fine( - (+ Math_Int_To_Float(FS_I6X.Get_Ibus_msg(0),1000,2000,-1.0f,+1.0f)) );
+            Chassis.Motor_Chassis_Right.Set_Hub_Torque_fine(  - Math_Int_To_Float(FS_I6X.Get_Ibus_msg(0),1000,2000,-1.0f,+1.0f) );
+            //HACK：实际补偿在Set_Hub_Torque的函数定义中实现了
+
+            Foot_LQR.Set_p_dot_fine(Math_Int_To_Float(FS_I6X.Get_Ibus_msg(1),1000,2000,-10.0f,+10.0f));//HACK:此处输入的是转速，需要转换成轮速m/s
+
+            // //HACK:摩擦前馈？
+            // //HACK:速度限制？
+            Chassis.Motor_Chassis_Left.Set_Hub_Torque( -Foot_LQR.Get_tau_w() * 0.5f  );//HACK：此处的速度方向分配方式可以优化
+            Chassis.Motor_Chassis_Right.Set_Hub_Torque( Foot_LQR.Get_tau_w() * 0.5f );//HACK:此处的速度补偿在函数定义中实现了
+
+            //Chassis.RTOS_1ms_Calculate_Callback();
+            // Chassis.Motor_Chassis_Left.RTOS_Calculate_Callback_debug();//HACK:滤波器的更新在此，位于 LQR 之后，导致天然晚一个周期？？
+            // Chassis.Motor_Chassis_Right.RTOS_Calculate_Callback_debug();//HACK：debug用，后续封装进入Chassis.RTOS_1ms_Calculate_Callback()
+            Chassis.Motor_Chassis_Left.RTOS_Calculate_Callback();//HACK:滤波器的更新在此，位于 LQR 之后，导致天然晚一个周期？？
+            Chassis.Motor_Chassis_Right.RTOS_Calculate_Callback();//HACK：debug用，后续封装进入Chassis.RTOS_1ms_Calculate_Callback()
+
+        }else
+        {
+            //置0，安全保护
+            Chassis.Motor_Chassis_Left.Set_Hub_Torque( 0 );//HACK：此处的速度方向分配方式可以优化
+            Chassis.Motor_Chassis_Right.Set_Hub_Torque( 0);
+
+            Chassis.Motor_Chassis_Left.RTOS_Calculate_Callback();//HACK:滤波器的更新在此，位于 LQR 之后，导致天然晚一个周期？？
+            Chassis.Motor_Chassis_Right.RTOS_Calculate_Callback();//HACK：debug用，后续封装进入Chassis.RTOS_1ms_Calculate_Callback()
+
+
+        }
+
+    Foot_left.VMC_Motor_tau_map();
+    Foot_right.VMC_Motor_tau_map();//计算实际力矩输出
+    if (FS_I6X.Get_Ibus_msg(5) >= 1751 && safe_flag == 0 )//下拨SWB拨杆启动腿长控制
+    {
+
+        // // //HACK:测试VMC时用
+        // Foot_left.Set_leg_swing_torque( Math_Int_To_Float(FS_I6X.Get_Ibus_msg(3),1000,2000,-5.125f,5.125f) );
+        // Foot_right.Set_leg_swing_torque( Math_Int_To_Float(FS_I6X.Get_Ibus_msg(3),1000,2000,-5.125f,5.125f) );
+
+
+        Foot_left.Set_leg_swing_torque(Foot_LQR.Get_tau_leg() * 0.5f);
+        Foot_right.Set_leg_swing_torque(Foot_LQR.Get_tau_leg() * 0.5f);
+
+
+
+
         Chassis.M8009p_1.Set_Control_Torque(Foot_right.Get_Motor_tau1());
         Chassis.M8009p_2.Set_Control_Torque(Foot_right.Get_Motor_tau2());
 
@@ -594,32 +728,47 @@ void CLASS_ROBOT::Chassis_Control() {
         Chassis.M8009p_4.Set_Control_Torque( - Foot_left.Get_Motor_tau2());
 
 
+
+        // Chassis.M8009p_1.RTOS_Send_Callback_debug();
+        // Chassis.M8009p_2.RTOS_Send_Callback_debug();//TODO：为什么直接调用类原版的Callback函数一样会触发通信丢失错误(超时）,Enable里的output被禁用的话就会导致单片机获得的电机状态是enable但实际已经丢失通信？
+        // //TODO::达妙电机的回传数据似乎在上位机中不失能也可以收到，但为何这里不行？
+        // Chassis.M8009p_3.RTOS_Send_Callback_debug();
+        // Chassis.M8009p_4.RTOS_Send_Callback_debug();
+        //DONE：2610161321：VMC的解算基本跑通
+
+
         Chassis.M8009p_1.RTOS_Send_Callback();
-        Chassis.M8009p_2.RTOS_Send_Callback();//TODO：为什么直接调用类原版的Callback函数一样会触发通信丢失错误(超时）,Enable里的output被禁用的话就会导致单片机获得的电机状态是enable但实际已经丢失通信？
+        Chassis.M8009p_2.RTOS_Send_Callback();
         //TODO::达妙电机的回传数据似乎在上位机中不失能也可以收到，但为何这里不行？
         Chassis.M8009p_3.RTOS_Send_Callback();
         Chassis.M8009p_4.RTOS_Send_Callback();
         //DONE：2610161321：VMC的解算基本跑通
+    }else
+    {
+        Foot_LQR.Set_wheel_S(0);//HACK：临时用于清0里程计
+
+        Foot_left.Set_leg_swing_torque( 0 );
+        Foot_right.Set_leg_swing_torque( 0 );
+
+        Chassis.M8009p_1.Set_Control_Torque(0);
+        Chassis.M8009p_2.Set_Control_Torque(0);
+
+        Chassis.M8009p_3.Set_Control_Torque( 0);
+        Chassis.M8009p_4.Set_Control_Torque( 0);
+
+        // Chassis.M8009p_1.RTOS_Send_Callback();
+        // Chassis.M8009p_2.RTOS_Send_Callback();
+        // //TODO::达妙电机的回传数据似乎在上位机中不失能也可以收到，但为何这里不行？
+        // Chassis.M8009p_3.RTOS_Send_Callback();
+        // Chassis.M8009p_4.RTOS_Send_Callback();
+
+        Chassis.M8009p_1.CAN_Send_Exit();
+        Chassis.M8009p_2.CAN_Send_Exit();
+        Chassis.M8009p_3.CAN_Send_Exit();
+        Chassis.M8009p_4.CAN_Send_Exit();
+
+
     }
-
-
-
-
-
-
-        if (FS_I6X.Get_Ibus_msg(4) >= 1751)//下拨SWA启动轮毂电机力矩控制
-        {
-            //HACK：对转向的控制实现可以优化一下，此外包括传参的参数常量化等
-            // Chassis.Motor_Chassis_Left.Set_Hub_Torque( - (Math_Int_To_Float(FS_I6X.Get_Ibus_msg(1),1000,2000,-2.3f,+2.3f) + Math_Int_To_Float(FS_I6X.Get_Ibus_msg(0),1000,2000,-2.3f,+2.3f)) );
-            // Chassis.Motor_Chassis_Right.Set_Hub_Torque( Math_Int_To_Float(FS_I6X.Get_Ibus_msg(1),1000,2000,-2.3f,+2.3f) - Math_Int_To_Float(FS_I6X.Get_Ibus_msg(0),1000,2000,-2.3f,+2.3f) );
-            // //HACK:摩擦前馈？
-            // //HACK:速度限制？
-            // Chassis.Motor_Chassis_Left.RTOS_Calculate_Callback();
-            // Chassis.Motor_Chassis_Right.RTOS_Calculate_Callback();
-
-
-        }
-
 
 
     //FSi6x_control_polar();
@@ -1198,6 +1347,7 @@ void CLASS_ROBOT::Main_Loop_Things() {
   // 1000ms�����ж�
   if (robot_1000ms_cycle_flag) {
     robot_1000ms_cycle_flag = false;
+      RTOS_1000ms_Calculate_Callback();
     RTOS_1000ms_Alive_PeriodElapsedCallback();
   }
 }
@@ -1263,7 +1413,7 @@ float f2_in_angle;
 
 float theta_polar_fine;
 // HACK：全局变量乱飞不是一种好的方案，以及目前极坐标系函数中塞了太多东西
-void CLASS_ROBOT ::FSi6x_control_polar()//极坐标系
+void CLASS_ROBOT ::FSi6x_control_polar()//极坐标系——原RC腿部解算和控制，轮腿弃用该方案
 {
 
     // if (FS_I6X.Get_Status() == FS_IA6B_Status_ENABLE)

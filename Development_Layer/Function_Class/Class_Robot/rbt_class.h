@@ -21,10 +21,10 @@
 #include "g_c_communicate.h"
 #include "lift.h"
 
-#include "foot_control.h"
+//#include "foot_control.h"
 #include "fs_ia6b.h"
 #include "../../Robot_Control/Chassis/chassis.h"
-#include "VMC.h"
+
 
 extern volatile bool robot_1ms_cycle_flag;
 extern volatile bool robot_100ms_cycle_flag;
@@ -184,25 +184,28 @@ protected:
 class CLASS_ROBOT
 {
 public:
-    //腿部运动学解析测试
-    /** @brief 左后腿（CAN1, ID 0x11/0x12） */
-    Class_SingleDogFoot_DM Foot1_Left;
-    /** @brief 右后腿（CAN1, ID 0x14/0x13） */
-    Class_SingleDogFoot_DM Foot2_Right;
+    // //腿部运动学解析测试
+    // /** @brief 左后腿（CAN1, ID 0x11/0x12） */
+    // Class_SingleDogFoot_DM Foot1_Left;
+    // /** @brief 右后腿（CAN1, ID 0x14/0x13） */
+    // Class_SingleDogFoot_DM Foot2_Right;
 
     void FSi6x_control_polar();
+
+    int8_t safe_flag = 0;//HACK:调试临时用
 
 
     Class_Chassis Chassis;
 
-    Class_PID Chassis_Banlance;//底盘平衡PID
-
-    Class_PID Chassis_Banlance_TargetAngle;//目标角度PID
+    // Class_PID Chassis_Banlance;//底盘平衡PID
     //
+    // Class_PID Chassis_Banlance_TargetAngle;//目标角度PID
 
-    Class_VMC Foot_right;
-    Class_VMC Foot_left;
-    //VMC测试
+
+
+
+
+
 
     // 静态实例指针，用于回调函数访问
     static CLASS_ROBOT *Instance;
@@ -267,11 +270,13 @@ public:
     //底盘通讯
     G_C_Communicate The_Chassis;
 
-    Class_FS_IA6B FS_I6X;
+
 
     void Init();
 
     void RTOS_1000ms_Alive_PeriodElapsedCallback();
+
+    void RTOS_1000ms_Calculate_Callback();
 
     void RTOS_100ms_Alive_PeriodElapsedCallback();
 

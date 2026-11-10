@@ -37,7 +37,7 @@ void IMU_QuaternionEKF_Init(float process_noise1, float process_noise2, float me
     QEKF_INS.Q1 = process_noise1;
     QEKF_INS.Q2 = process_noise2;
     QEKF_INS.R = measure_noise;
-    QEKF_INS.ChiSquareTestThreshold = 1e-8;
+    QEKF_INS.ChiSquareTestThreshold = 1e-9;//原值为1e-8
     QEKF_INS.ConvergeFlag = 0;
     QEKF_INS.ErrorCount = 0;
     QEKF_INS.UpdateCount = 0;

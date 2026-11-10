@@ -78,7 +78,7 @@ void Class_PID::PID_Process() {
   abs_error = Math_Abs(error);
 
   // 判断死区
-  if (abs_error < Dead_Zone) {
+  if (abs_error <= Dead_Zone) {
     Target = Now;
     error = 0.0f;
     abs_error = 0.0f;

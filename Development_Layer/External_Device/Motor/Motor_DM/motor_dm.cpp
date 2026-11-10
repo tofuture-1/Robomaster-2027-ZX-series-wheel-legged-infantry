@@ -332,7 +332,17 @@ void Class_Motor_DM_Normal::RTOS_100ms_Alive_Callback()
         Motor_DM_Status = Motor_DM_Status_ENABLE;
     }
 
-    Pre_Flag = Flag;
+    Pre_Flag = Flag;//FIXME：完善存活检测判断
+//     DM 电机超时后仍可能发送旧力矩
+// motor_dm.cpp:321-336 的 100 ms 存活检测只设置 Motor_DM_Status； motor_dm.cpp:342-366 的 RTOS_Send_Callback() 判断的是 Rx_Data.Control_Status，没有判断 Motor_DM_Status。
+//
+// 如果通信中断，Control_Status 会停留在最后一次 ENABLE，Control_Torque 还是旧值，恢复通信后可能立刻输出旧力矩。
+//
+// 建议：
+//
+// 超时时把 Control_Torque 清零并发送 Exit；
+// RTOS_Send_Callback() 先检查 Motor_DM_Status 和 Control_Status；
+// 重新连接后先进入零力矩状态，等控制层重新给出指令。
 }
 
 /**
@@ -381,13 +391,15 @@ void Class_Motor_DM_Normal::RTOS_Send_Callback_debug()
         Math_Constrain(&K_P, 0.0f, 500.0f);
         Math_Constrain(&K_D, 0.0f, 5.0f);
 
-        CAN_Send_Enter();
+        CAN_Send_Exit();
+        //CAN_Send_Enter();
         //Output();//HACK：debug专用的
     }
     else if (Rx_Data.Control_Status == Motor_DM_Control_Status_DISABLE)//FIXME：两种不同枚举类型比较导致始终不对?但是之前的又可以用，之前的也不可用。自己在RC写的可用
     {
         // 电机可能掉线, 使能电机
-        CAN_Send_Enter();
+        // CAN_Send_Enter();
+        CAN_Send_Exit();//debug用
     }
     else
     {

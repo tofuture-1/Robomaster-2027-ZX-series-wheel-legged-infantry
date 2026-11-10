@@ -42,8 +42,8 @@ public:
     inline float Get_Accel_X(void) const { return INS.Accel[IMU_X]; }
     inline float Get_Accel_Y(void) const { return INS.Accel[IMU_Y]; }
     inline float Get_Accel_Z(void) const { return INS.Accel[IMU_Z]; }
-    inline float Get_Gyro_X(void) const { return INS.Gyro[IMU_X]; }
-    inline float Get_Gyro_Y(void) const { return INS.Gyro[IMU_Y]; }
+    inline float Get_Gyro_X(void) const { return INS.Gyro[IMU_X]; }//此项与Pitch轴的角速度接近，单位是弧度
+    inline float Get_Gyro_Y(void) const { return INS.Gyro[IMU_Y]; }//TODO：理解此处XYZ与欧拉角转换关系
     inline float Get_Gyro_Z(void) const { return INS.Gyro[IMU_Z]; }
     inline float Get_Temp() const { return INS.Temperature; }//TODO:需要进一步体会此处const的用法
     inline float Get_Roll(void) const { return INS.Roll; }

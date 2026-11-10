@@ -11,9 +11,10 @@ void Class_Board_IMU::Init(SPI_HandleTypeDef *hspi)
     this->dt = 0.001f;
     BMI088_Init(hspi);
 
-    // 原参数 R=1e7，加速度修正增益过小，三轴积分漂移；调小 R 增强重力修正
-    //IMU_QuaternionEKF_Init(10.0f, 0.001f, 10000000.0f, 1.0f, 0.0f);
-    IMU_QuaternionEKF_Init(81.5f, 0.0010f, 1295000.0f, 1.0f, 0.000f);
+    // 原参数 R=1e7，加速度修正增益过小，三轴积分漂移；调小 R 增强重力修正：顺序为Q1，Q2，R，lambda，lpf
+    IMU_QuaternionEKF_Init(1.00f, 0.001f, 20000.0f, 1.0f, 0.0f);//原52°c温控下参数
+    // IMU_QuaternionEKF_Init(0.50f, 0.001f, 15000.0f, 1.0f, 0.0f);
+    //IMU_QuaternionEKF_Init(81.5f, 0.0110f, 1295000.0f, 1.0f, 0.000f);
     INS.AccelLPF = 0.0085f;
 
     offset_flag = 1;
@@ -26,8 +27,12 @@ void Class_Board_IMU::Init(SPI_HandleTypeDef *hspi)
     // 开机自动标定：机器人需静置约 2 秒，自动更新零偏与 AccelScale
     //BMI088_Calibrate(&bmi088_data, hspi, 2000);
 
-    IMU_PID_Heater.Init(2.0f,0.3f,2.0f,0.060f,0.0f,5.0f,20.0f,0.1,0.125f);
 
+    //IMU_PID_Heater.Init(1.75f,3.50f,0.5f,0.00f,0.00f,2.2f,20.0f,0.001f,0.5f);
+
+    //IMU_PID_Heater.Init(1.85f,3.70f,0.70f,0.00f,0.00f,2.5f,20.0f,0.001f,0.5f);//电池在两格左右时较稳
+    //IMU_PID_Heater.Init(1.75f,3.70f,0.60f,0.00f,0.00f,2.5f,20.0f,0.001f,0.5f);//电池满电
+//TODO：需要对比有无温控
 
 }
 
@@ -49,7 +54,7 @@ void Class_Board_IMU::Update(void)
     INS.Gyro[IMU_Y] = bmi088_data.Gyro[IMU_Y] - bmi088_data.GyroOffset[IMU_Y];
     INS.Gyro[IMU_Z] = bmi088_data.Gyro[IMU_Z] - bmi088_data.GyroOffset[IMU_Z];
 
-    INS.Temperature = bmi088_data.Temp;
+
     // 更新静态检测
     Update_Stationary_Detection();
 
@@ -77,6 +82,10 @@ void Class_Board_IMU::Update(void)
     INS.Roll = QEKF_INS.Roll;
     INS.Pitch = QEKF_INS.Pitch;//直连
     INS.YawTotalAngle = QEKF_INS.YawTotalAngle;
+
+
+
+    INS.Temperature = bmi088_data.Temp;//更新温度数据HACK：注意考虑是否需要
 }
 
 
@@ -85,6 +94,8 @@ void Class_Board_IMU::IMU_Heater_SetPower(uint8_t percentage)
 
     if (percentage >100) percentage = 100;
     if (percentage < 0) percentage = 0;//做上下限制
+
+    if (percentage > 25) percentage = 25;//底层再限制
 
     uint32_t compare_value = (uint32_t)((float)percentage / 100.0f * 2750.0f);
 
@@ -95,19 +106,29 @@ void Class_Board_IMU::IMU_Heater_SetPower(uint8_t percentage)
 
 void Class_Board_IMU::IMU_Heater_Control(uint16_t Target_temp)
 {
+
+
+
     IMU_PID_Heater.Set_Target(Target_temp);
     IMU_PID_Heater.Set_Now(Get_Temp());
+
+
 
     IMU_PID_Heater.PID_Process();
 
 
     if (Get_Temp() < IMU_HEARTER_MAX_TEMPERATURE )
     {
-        IMU_Heater_SetPower(IMU_PID_Heater.Get_Out());
+
         if (Get_Temp() >= Target_temp )
         {
-            IMU_PID_Heater.Set_Integral_Error(0);//到达目标后清空积分误差，避免积分负饱和
+            //IMU_PID_Heater.Set_Integral_Error(0);//到达目标后清空积分误差，避免积分负饱和
+
         }
+
+        IMU_Heater_SetPower(IMU_PID_Heater.Get_Out());
+
+
     }else
     {
         IMU_Heater_SetPower(0);//多一层过温保护

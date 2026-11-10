@@ -24,11 +24,15 @@ enum Enum_PID_D_First
 class Class_PID
 {
 public:
-    void Init(float K_p, float K_i, float K_d, float K_f = 0.0f, float K_ff = 0.0f, float IOut_Max = 0.0f, float Output_Max = 0.0f, float D_t = 0.005f, float Dead_zone = 0.0f, float I_Variable_A = 0.0f, float I_Variable_B = 0.0f, float Integral_Separate_Threshold = 0.0f, Enum_PID_D_First D_first = PID_D_First_DISABLE);
-
+    void Init(float K_p, float K_i, float K_d, float K_f = 0.0f, float K_ff = 0.0f, float IOut_Max = 0.0f, float Output_Max = 0.0f,
+        float D_t = 0.005f, float Dead_zone = 0.0f, float I_Variable_A = 0.0f, float I_Variable_B = 0.0f,
+        float Integral_Separate_Threshold = 0.0f, Enum_PID_D_First D_first = PID_D_First_DISABLE);
+//HACK:注意这里的D_t计算周期
     inline float Get_Integral_Error();
 
     inline float Get_Out();
+
+    float Get_Pre_Out(){ return Pre_Out; };
 
     inline void Set_D_T(float DT);
 

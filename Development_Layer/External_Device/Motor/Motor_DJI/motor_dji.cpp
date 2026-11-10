@@ -1005,10 +1005,15 @@ void Class_Motor_DJI_C620::RTOS_100ms_Alive_Callback()
     {
         // 电机断开连接
         Motor_DJI_Status = Motor_DJI_Status_DISABLE;
-        Motor_DJI_Control_Method = Motor_DJI_Control_Method_CURRENT;
+        //Motor_DJI_Control_Method = Motor_DJI_Control_Method_CURRENT;//FIXME：C620 超时会把控制模式永久切成 CURRENT
         PID_Angle.Set_Integral_Error(0.0f);
         PID_Omega.Set_Integral_Error(0.0f);
         Target_Current = 0.0f;
+
+        //FIXME：还需要清空发送邮箱，否则一样会发上一次的？？？
+        Tx_Data[0] = (int16_t) 0;
+        Tx_Data[1] = (int16_t) 0;//最后数据是怎么发送通过RTOS_1ms_FDCAN_Motor_Callback();在rbt_class的RTOS_1ms_Conmunicate_Callback()中
+
     }
     else
     {
@@ -1221,7 +1226,7 @@ void Class_Motor_DJI_C620::Power_Limit_Control()
 void Class_Motor_DJI_C620::Output()
 {
     Tx_Data[0] = (int16_t) Out >> 8;
-    Tx_Data[1] = (int16_t) Out;//最后数据是怎么发送通过RTOS_1ms_FDCAN_Motor_Callback();在rbt_class的RTOS_1ms_Conmunicate_Callback()中
+    Tx_Data[1] = (int16_t) Out;//最后数据是发送通过RTOS_1ms_FDCAN_Motor_Callback();在rbt_class的RTOS_1ms_Conmunicate_Callback()中
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/
