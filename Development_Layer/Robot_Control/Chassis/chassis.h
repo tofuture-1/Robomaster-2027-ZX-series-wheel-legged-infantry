@@ -16,7 +16,8 @@
 
 enum Enum_FSM_Chassis
 {
-    Chassis_STATE_SELF_RESCUE = 0,
+    Chassis_STATE_IDLE = 0,
+    Chassis_STATE_SELF_RESCUE,
     Chassis_STATE_NORMAL_LQR_BALANCE,
     Chassis_STATE_JUMPING,
     Chassis_STATE_OFF_GROUND,
@@ -85,9 +86,12 @@ class Class_FSM_Chassis : public Class_FSM
 
     public:
 
-    Enum_FSM_Chassis Chassis_State;
+
 
     void RTOS_Calculate_Callback();//重写状态转换逻辑
+
+
+protected:
 
 
 };
@@ -113,12 +117,13 @@ public:
     Class_FSM_Chassis Chassis_FSM;
 
 
+
     //控制相关
     Class_LQR Foot_LQR;//单LQR实例，假设双腿对称
     //Class_LQR Foot_LQR_Right;
 
-    Class_VMC Foot_right;
-    Class_VMC Foot_left;
+    Class_VMC Foot_right_VMC;
+    Class_VMC Foot_left_VMC;//HACK：规范化命名
     //VMC测试
 
     Class_FS_IA6B FS_I6X;//HACK:过渡写法,之后再剥离解耦到Robot层
@@ -134,6 +139,18 @@ public:
 
     inline void Set_Banclance_Kp(float __Kp);
     inline void Set_Banclance_Kd(float __Kd);
+    void Set_Chassis_Pitch(float __Pitch){Pitch = __Pitch;};
+    void Set_Chassis_Pitch_dot(float __Pitch_dot){ Pitch_dot= __Pitch_dot;};
+
+
+    //不同状态下的控制函数
+    void IDLE_Control();
+    void SELF_RESCUE_Control();
+    void NORMAL_LQR_BALANCE_Control();
+    void JUMPING_Control();
+    void OFF_GROUND_Control();
+
+    void Chassis_State_Update();//HACK：临时用于处理FSM状态转移
 
 
     void RTOS_100ms_Alive_Callback();
@@ -143,11 +160,15 @@ public:
 protected:
     // 初始化相关常量
 
+    Enum_FSM_Chassis Chassis_State = Chassis_STATE_IDLE;
     // 常量
 
 
     // 内部变量
-
+    float Pitch = 0.0f;//Pitch轴角度,预期单位为度°
+    float Pitch_dot = 0.0f;//Pitch轴角度,预期单位为弧度rad
+//外部读取的数据HACK:是否可以再优化逻辑?
+    int8_t state_change_flag = 0;//HACK：临时用于状态机特定切换是否开启的一个标志位
 
 
 
@@ -180,7 +201,9 @@ protected:
 
 
     // 内部函数
-    void Normal_LQR_Balance_Control();
+
+
+
 
     void Output();
 };

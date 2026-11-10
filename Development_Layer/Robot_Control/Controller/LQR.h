@@ -12,6 +12,10 @@
 class Class_LQR
 {
 public:
+
+  //void Init();
+
+
 //HACK：单位归一化的问题
   void Set_wheel_S(float wheel_S){p = wheel_S;};//HACK:临时清0用
   void Set_wheel_speed(float wheel_speed){p_dot = wheel_speed * R_w;};//HACK:临时用轮速换算车速

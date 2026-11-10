@@ -10,7 +10,7 @@
 void Class_LQR::LQR_Calculate()
 {
 
-  Math_Constrain(&p_dot_fine, -15.0f,+15.0f);//HACK:底层限制
+  Math_Constrain(&p_dot_fine, -15.0f,+15.0f);//HACK:底层限制m,传入前还有一层
   p += (p_dot - p_dot_fine * R_w) * D_t;//注意清0
   //HACK：此处的符号问题？貌似不需要 p_dot_fine * R_w？
 

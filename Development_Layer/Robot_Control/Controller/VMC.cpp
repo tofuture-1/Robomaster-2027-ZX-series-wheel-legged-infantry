@@ -7,8 +7,21 @@
 #include "drv_math.h"
 
 
-void Class_VMC::Init()
+void Class_VMC::Init(float i_L_des ,float i_K_L ,float i_D_L ,
+        float i_G_Fine ,
+        float i_K_pe ,float i_D_pe ,Enum_Foot_Control_Mode Control_mode,float i_K_p_VMC,float i_D_p_VMC)
 {
+
+    L_des = i_L_des;
+    K_L = i_K_L;
+    D_L = i_D_L;
+    G_Fine = i_G_Fine;
+    K_pe = i_K_pe;
+    D_pe = i_D_pe;
+
+    Foot_Control_Mode = Control_mode;
+    K_p_VMC = i_K_p_VMC;
+    D_p_VMC = i_D_p_VMC;
 
 }
 
@@ -144,15 +157,23 @@ void Class_VMC::VMC_Motor_tau_map()//HACK：注意方向（取负值），此前
 
     // Math_Constrain(&leg_swing_torque_delta_fine,-4.0f,4.0f);
     // //HACK：临时限幅
+    if (Foot_Control_Mode == VMC_Mode)
+    {
+        leg_swing_torque_VMC = K_p_VMC*(phi_des_VMC_Mode - phi) - D_p_VMC * phi_dot;
+    }else
+    {
+        leg_swing_torque_VMC = 0.0f;
+    }
 
-    if (leg_swing_torque > 30.0f)leg_swing_torque = 30.0f;
-    if (leg_swing_torque < -30.0f)leg_swing_torque = -30.0f;//HACK:限幅在LQR中就做？暂时保留这一层
+
+    if (leg_swing_torque_LQR > 30.0f)leg_swing_torque_LQR = 30.0f;
+    if (leg_swing_torque_LQR < -30.0f)leg_swing_torque_LQR = -30.0f;//HACK:限幅在LQR中就做？暂时保留这一层
 
     if (F_L > 400.0f)F_L = 400.0f;
     if (F_L < -400.0f)F_L = -400.0f;//HACK:限幅在LQR中就做？暂时保留这一层
 
-    tau_1 = Jacobian_Matrix[0][0] * F_L + Jacobian_Matrix[1][0] * (leg_swing_torque + leg_swing_torque_delta_fine);
-    tau_2 = Jacobian_Matrix[0][1] * F_L + Jacobian_Matrix[1][1] * (leg_swing_torque + leg_swing_torque_delta_fine);
+    tau_1 = Jacobian_Matrix[0][0] * F_L + Jacobian_Matrix[1][0] * (leg_swing_torque_LQR + leg_swing_torque_VMC + leg_swing_torque_delta_fine);
+    tau_2 = Jacobian_Matrix[0][1] * F_L + Jacobian_Matrix[1][1] * (leg_swing_torque_LQR + leg_swing_torque_VMC + leg_swing_torque_delta_fine);
     //DONE：2026101717xx这部分的倾倒力矩似乎不正常生效；之前雅可比矩阵部分的某项符号错了
 
     //最终关节力矩的映射
